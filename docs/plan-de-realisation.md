@@ -14,7 +14,7 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 - [ ] Configurer Cloudflare Access (code à usage unique) et mapper e-mail → rôle
 - [ ] Assistant d'import EDUKA + modèle .xlsx
 - [x] A1 moteur de projection par montée de cohorte, horizon 15 ans (`src/lib/cohort.ts`, jauge plafonnée / non plafonnée) — reste : bulle conservée, taux de rétention calculés sur 3/5 ans (export EDUKA par rentrée requis), stress tests, part IB
-- [ ] A2/A3 recettes, PFC AEFE
+- [x] A2/A3 moteur de recettes et PFC AEFE (`src/lib/recettes.ts`, 3 assiettes, abattement) — reste : grille par niveau × section × type tarifaire, multidevise, rapprochement avec le facturé EDUKA (export des facturés requis)
 - [x] Registre des drivers : catalogue initial (`src/lib/drivers.ts`) — reste : table de valeurs par année/version, API, traçabilité
 
 ## Décisions (1er octobre 2026)
