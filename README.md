@@ -1,6 +1,6 @@
 # Prospective OS Light
 
-Outil web de pilotage financier et de moyens pour établissements scolaires (pilote : LCS ou LFKL) :
+Outil web de pilotage financier et de moyens pour établissements scolaires (pilote : LFKL) :
 effectifs → structure → emplois → masse salariale → états financiers bouclés.
 
 - **Spécifications :** [`docs/cahier-des-charges.md`](docs/cahier-des-charges.md) (issu du doc « Cahier des charges — School Strategic OS Light »)

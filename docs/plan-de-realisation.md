@@ -17,7 +17,12 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 - [ ] A2/A3 recettes, PFC AEFE
 - [ ] Registre des drivers (P1)
 
-## Questions ouvertes (à trancher)
-- Établissement pilote : LCS ou LFKL ?
-- Horizon de prévision : 5 ans suffisent-ils pour le plan d'investissement ? (le prototype simule 10 ans)
-- Plan de trésorerie : mensuel ou hebdomadaire ?
+## Décisions (1er octobre 2026)
+- **Établissement pilote : LFKL.**
+- **Horizon de prévision : 15 ans** (le cahier des charges §6 disait 5 ans ; à reporter dans le moteur et le registre des drivers).
+- **Plan de trésorerie : mensuel** (12 à 18 mois, puis annuel).
+
+## Données de départ (LFKL)
+`data/lfkl/effectifs_par_niveau.csv` : effectifs agrégés par niveau issus des extractions EDUKA « Listes des élèves par tarif » 2023-24 (677), 2024-25 (762) et 2025-26 (823).
+Les fichiers sources contiennent des ID élèves pseudonymisés : ils restent dans `data/raw/` (ignoré par git).
+Points d'attention : niveau non renseigné (NR) pour 232 élèves en 2023-24 et 125 en 2024-25 ; pas de colonne section ni de tarif détaillé (seulement le payeur).
