@@ -23,6 +23,12 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 - **Plan de trésorerie : mensuel** (12 à 18 mois, puis annuel).
 
 ## Données de départ (LFKL)
-`data/lfkl/effectifs_par_niveau.csv` : effectifs agrégés par niveau issus des extractions EDUKA « Listes des élèves par tarif » 2023-24 (677), 2024-25 (762) et 2025-26 (823).
-Les fichiers sources contiennent des ID élèves pseudonymisés : ils restent dans `data/raw/` (ignoré par git).
-Points d'attention : niveau non renseigné (NR) pour 232 élèves en 2023-24 et 125 en 2024-25 ; pas de colonne section ni de tarif détaillé (seulement le payeur).
+Extractions EDUKA « Listes des élèves par tarif » 2023-24, 2024-25 et 2025-26 (fichiers bruts dans `data/raw/`, ignorés par git : ID élèves pseudonymisés).
+
+**Vérification faite sur les identifiants (1er octobre 2026).**
+- Un même identifiant garde le même niveau d'un fichier à l'autre : 442/442 (23-24 → 24-25) et 613/613 (24-25 → 25-26). Ex. les 38 « Terminale » de 24-25 sont tous encore « Terminale » en 25-26.
+- Le **niveau est donc le niveau courant de l'élève à la date d'extraction, recopié sur toutes les années**, et non son niveau de l'année du fichier. En revanche la **présence par année est bien historisée** : le fichier de chaque année liste les élèves facturés cette année-là.
+- Les lignes **sans niveau (232 en 23-24, 125 en 24-25) sont des élèves partis** : aucun n'est présent en 25-26 et aucun n'a de niveau dans une autre année. Leur niveau historique est inconnu.
+- Conséquence : `effectifs_par_niveau.csv` ne contient que 2025-26 (seule année dont les niveaux sont fiables). `effectifs_totaux.csv` donne les totaux par année, valides.
+- Pour reconstituer les niveaux passés : niveau_année = niveau courant − nombre d'années d'écart, valable pour les élèves encore présents (hypothèse : scolarité sans redoublement) ; impossible pour les partis. Les taux de rétention doivent donc s'appuyer sur un export datant de chaque rentrée.
+- Pas de colonne section ni de tarif détaillé (seulement le payeur).
