@@ -17,6 +17,11 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 - [x] A2/A3 moteur de recettes et PFC AEFE (`src/lib/recettes.ts`, 3 assiettes, abattement) — reste : grille par niveau × section × type tarifaire, multidevise, rapprochement avec le facturé EDUKA (export des facturés requis)
 - [x] Registre des drivers : catalogue initial (`src/lib/drivers.ts`) — reste : table de valeurs par année/version, API, traçabilité
 
+## Lot 2 (démarré)
+- [x] B1 structure pédagogique et B2 couverture des emplois, version Light (`src/lib/structure.ts`, `emplois.ts` ; détail et simplifications dans `docs/b1-b2-light.md`)
+- [ ] Recette : retrouver la carte des emplois de la rentrée en cours à l'ETP près (grille LFKL, postes en place et ORS réels à fournir)
+- [ ] B3 RH & masse salariale (isolé)
+
 ## Décisions (1er octobre 2026)
 - **Établissement pilote : LFKL.**
 - **Horizon de prévision : 15 ans** (le cahier des charges §6 disait 5 ans ; à reporter dans le moteur et le registre des drivers).

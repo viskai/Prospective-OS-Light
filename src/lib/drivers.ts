@@ -31,6 +31,14 @@ export function registreInitial(): DriverDef[] {
     if (n !== NIVEAUX[0]) out.push(d(`niv.${n}.retention`, `Taux de rétention — ${n}`, "%", "A1", 0.1));
   }
   for (const c of ["Mat", "Elem", "Col", "Lyc"]) out.push(d(`cycle.${c}.capacite`, `Capacité par classe — ${c}`, "élèves", "A1"));
+  for (const c of ["maternelle", "elementaire", "college", "lycee"]) out.push(d(`struct.plafondClasse.${c}`, `Plafond de classe — ${c}`, "élèves", "B1"));
+  for (const c of ["LV", "SCI", "DED", "SPE", "OPT"]) out.push(d(`struct.plafondGroupe.${c}`, `Plafond de groupe — ${c}`, "élèves", "B1"));
+  out.push(d("struct.maxBloc", "Classes regroupables pour les dédoublements", "classes", "B1"));
+  out.push(d("struct.ponderation", "Pondération cycle terminal (1,1 h)", "0/1", "B1"));
+  out.push(d("emp.ors.defaut", "ORS par défaut", "h/semaine", "B2"));
+  out.push(d("emp.ors.EPS", "ORS EPS", "h/semaine", "B2"));
+  out.push(d("emp.orsRecrutement", "ORS d'un temps plein créé", "h/semaine", "B2"));
+  out.push(d("emp.hsaMax", "HSA maximales par poste", "h/semaine", "B2", 0.5));
   out.push(d("rev.hausse", "Hausse annuelle des tarifs", "%", "A2", 0.5));
   out.push(d("rev.remise", "Remises et fratries", "% brut", "A2", 0.5));
   out.push(d("aefe.pfc", "Taux de PFC AEFE", "% brut", "A3", 0.5));
