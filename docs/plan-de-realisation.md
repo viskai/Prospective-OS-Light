@@ -13,9 +13,9 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 - [ ] `wrangler d1 create os-light`, renseigner `database_id`, appliquer `migrations/0001_socle.sql`
 - [ ] Configurer Cloudflare Access (code à usage unique) et mapper e-mail → rôle
 - [ ] Assistant d'import EDUKA + modèle .xlsx
-- [ ] A1 effectifs & capacité (montée de cohorte, 3 modes de jauge) — logique de référence dans `prototype/`
+- [x] A1 moteur de projection par montée de cohorte, horizon 15 ans (`src/lib/cohort.ts`, jauge plafonnée / non plafonnée) — reste : bulle conservée, taux de rétention calculés sur 3/5 ans (export EDUKA par rentrée requis), stress tests, part IB
 - [ ] A2/A3 recettes, PFC AEFE
-- [ ] Registre des drivers (P1)
+- [x] Registre des drivers : catalogue initial (`src/lib/drivers.ts`) — reste : table de valeurs par année/version, API, traçabilité
 
 ## Décisions (1er octobre 2026)
 - **Établissement pilote : LFKL.**
