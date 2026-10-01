@@ -18,7 +18,7 @@ Code : `src/lib/referentiel.ts`, `src/lib/structure.ts` (B1), `src/lib/emplois.t
 ## Ce qui est simplifié ou retiré par rapport aux outils d'origine
 | Retiré | Remplacé par |
 |---|---|
-| IB Diploma, BFI/sections internationales, DNL, dispositifs | hors périmètre Light |
+| Section internationale (SI), DNL hors BFI, autres dispositifs (SELO, PARLE, binational, sportive) | hors périmètre Light |
 | Voies technologiques (STMG, STI2D, ST2S…) | voie générale seule |
 | Placement des spécialités en barrettes (listes d'élèves réelles) | **part d'élèves** par choix, avec contrôle (LV2 = 1, spécialités = 3 en 1ère, 2 en Tle) |
 | Optimisation du primaire multiniveau | 1 classe = 1 niveau |
@@ -27,8 +27,14 @@ Code : `src/lib/referentiel.ts`, `src/lib/structure.ts` (B1), `src/lib/emplois.t
 | Versions du référentiel, statuts détaillés, listes nominatives d'enseignants | postes saisis par discipline ; le nominatif reste dans B3 |
 | Planning des groupes / fiches de structure (écrans) | non repris : l'OS Light ne publie que des besoins agrégés |
 
+## Conservés à la demande : IB, BFI, langue du pays hôte
+- **IB Diploma** : niveaux `ib1` et `ib2` (effectifs saisis, distincts de 1ère et terminale générales : A1 doit les en retrancher). TOK 1,5 h en classe, 6 matières par élève (3 HL à 4 h, 3 SL à 3 h), groupes plafonnés à 20, contrôle « 6 matières par élève ». Parts par matière = placeholders uniformes.
+- **BFI** (1ère et terminale) : connaissance du monde 2 h, approfondissement culturel et linguistique 2 h, DNL en langue 2 h (histoire-géographie par défaut, co-intervention optionnelle). Effectif du dispositif saisi (`NiveauIn.bfi`).
+- **Langue du pays hôte (malais)**, hors grille, discipline `LVH` assurée par un spécialiste : 2 h par division en élémentaire et au collège, 1 h au lycée sur activation. Volumes à confirmer.
+- **IMP et décharges** : montants forfaitaires (pas d'heures), portés par B3 (`src/lib/rh.ts`).
+
 ## À paramétrer pour LFKL (valeurs actuelles = placeholders)
-- Parts de choix par défaut : LV2 (espagnol 50 %, allemand 20 %, chinois 30 %), spécialités, options (désactivées). Langue du pays hôte (malais) absente du référentiel : à ajouter si hors grille.
+- Parts de choix par défaut : LV2 (espagnol 50 %, allemand 20 %, chinois 30 %), spécialités, options (désactivées). Volumes de la langue du pays hôte, parts de matières IB.
 - Plafonds de classe et de groupe, ORS, seuil de HSA, ORS de recrutement local.
 - Statut des enseignants (détachés / locaux) : B3.
 

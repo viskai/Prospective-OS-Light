@@ -1,6 +1,6 @@
 // B1 — Structure pédagogique (version Light) : effectifs projetés → divisions → heures-professeur → ETP.
-// Reprend le moteur de « TRM en direct » ; sans IB/DNL/dispositifs, barrettes de spécialités, missions ni transferts.
-import { NIVEAUX_DEF, REGLAGES_DEFAUT, type Cours, type NiveauDef, type Reglages } from "./referentiel.ts";
+// Reprend le moteur de « TRM en direct » ; sans section internationale, barrettes de spécialités, missions ni transferts.
+import { BFI, NIVEAUX_DEF, REGLAGES_DEFAUT, type Cours, type NiveauDef, type Reglages } from "./referentiel.ts";
 
 export interface NiveauIn {
   id: string;                          // ps … cm2, 6e … 3e, 2nde, 1g, tg
@@ -9,6 +9,8 @@ export interface NiveauIn {
   parts?: Record<string, number>;      // surcharge des parts de choix, par id de cours
   gr?: Record<string, number>;         // surcharge des heures en groupes, par id de cours
   inactifs?: string[];                 // cours désactivés
+  actifs?: string[];                   // cours à activer (ex. langue du pays hôte au lycée)
+  bfi?: { actif: boolean; eff: number; langue?: string; dnl?: string[]; coIntervention?: boolean };
 }
 
 export interface Alerte { niveau: "critique" | "alerte" | "info"; texte: string }
@@ -72,6 +74,23 @@ const ventiler = (parts: Record<string, number>, h: number, acc: Record<string, 
 };
 const orsDe = (R: Reglages, d: string) => R.ors[d] ?? R.ors.defaut ?? 18;
 
+/** Cours du BFI pour 1ère / terminale : choix à effectif saisi, plafond d'option. */
+function coursBfi(def: NiveauDef, nv: NiveauIn): (Cours & { effAbs: number })[] {
+  const b = nv.bfi;
+  if (!b?.actif || !BFI.niveaux.includes(def.id) || !(b.eff > 0)) return [];
+  const langue = b.langue ?? BFI.langueDefaut;
+  const dnl = b.dnl?.length ? b.dnl : BFI.dnlDefaut;
+  return BFI.composantes.map((c) => {
+    let parts: Record<string, number>;
+    if (c.role === "langue") parts = { [langue]: 1 };
+    else {
+      parts = Object.fromEntries(dnl.map((d) => [d, 1 / dnl.length]));
+      if (b.coIntervention) parts = { ...parts, [langue]: (parts[langue] ?? 0) + 1 };   // professeur de langue présent avec le professeur de DNL
+    }
+    return { id: `bfi.${c.id}`, label: `BFI : ${c.label}`, parts, h: c.h, cat: "OPT" as const, kind: "choix" as const, effAbs: b.eff };
+  });
+}
+
 function calculerNiveau(def: NiveauDef, nv: NiveauIn, R: Reglages): ResNiveau {
   const plafondClasse = R.plafondClasse[def.cycle];
   const divMin = nv.eff > 0 ? Math.ceil(nv.eff / plafondClasse) : 0;
@@ -82,8 +101,9 @@ function calculerNiveau(def: NiveauDef, nv: NiveauIn, R: Reglages): ResNiveau {
 
   const parDisc: Record<string, number> = {};
   const cours: ResCours[] = [];
-  for (const c of def.cours as Cours[]) {
+  for (const c of [...(def.cours as Cours[]), ...coursBfi(def, nv)] as (Cours & { effAbs?: number })[]) {
     if (nv.inactifs?.includes(c.id)) continue;
+    if (c.actifDefaut === false && !nv.actifs?.includes(c.id)) continue;
     const somme = Object.values(c.parts).reduce((s, x) => s + x, 0);
     const k = somme > 1 + 1e-9 ? somme : 1;                       // co-intervention : plusieurs professeurs en même temps
     const plafond = R.plafondGroupe[c.cat];
@@ -95,7 +115,7 @@ function calculerNiveau(def: NiveauDef, nv: NiveauIn, R: Reglages): ResNiveau {
       r.prof = ((c.h - gr) * div + gr * G) * k;
     } else {
       const part = Math.max(0, nv.parts?.[c.id] ?? c.part ?? 0);
-      const eff = part * nv.eff;
+      const eff = c.effAbs ?? part * nv.eff;
       const G = eff > 0 ? Math.ceil(eff / plafond - 1e-9) : 0;
       r.groupes = G;
       r.prof = c.h * G * k;
@@ -109,12 +129,13 @@ function calculerNiveau(def: NiveauDef, nv: NiveauIn, R: Reglages): ResNiveau {
   const parDiscPond: Record<string, number> = {};
   for (const [d, h] of Object.entries(parDisc)) parDiscPond[d] = pond && d !== "EPS" ? h * R.ponderationFacteur : h;
   // contrôles de cohérence des choix (LV2 : 1 par élève ; spécialités : 3 en 1ère, 2 en terminale)
-  const attendu: Record<string, number> = { lv2: def.id === "6e" ? 0 : 1, spe: def.id === "1g" ? 3 : def.id === "tg" ? 2 : 0 };
+  const attendu: Record<string, number> = { lv2: def.id === "6e" ? 0 : 1, spe: def.id === "1g" ? 3 : def.id === "tg" ? 2 : 0, ib: def.id.startsWith("ib") ? 6 : 0 };
   for (const [g, cible] of Object.entries(attendu)) {
     if (!cible) continue;
-    const somme = (def.cours as Cours[]).filter((c) => c.groupe === g && !nv.inactifs?.includes(c.id))
-      .reduce((s, c) => s + Math.max(0, nv.parts?.[c.id] ?? c.part ?? 0), 0);
-    if (Math.abs(somme - cible) > 0.005) alertes.push({ niveau: "info", texte: `${g === "lv2" ? "LV2" : "Spécialités"} : ${somme.toFixed(2)} choix par élève (attendu : ${cible})` });
+    const membres = (def.cours as Cours[]).filter((c) => c.groupe === g && !nv.inactifs?.includes(c.id));
+    if (!membres.length) continue;                                  // niveau sans ce type de choix (ex. LV2 en IB)
+    const somme = membres.reduce((s, c) => s + Math.max(0, nv.parts?.[c.id] ?? c.part ?? 0), 0);
+    if (Math.abs(somme - cible) > 0.005) alertes.push({ niveau: "info", texte: `${g === "lv2" ? "LV2" : g === "ib" ? "Matières IB" : "Spécialités"} : ${somme.toFixed(2)} choix par élève (attendu : ${cible})` });
   }
   return { id: def.id, nom: def.nom, cycle: def.cycle, eff: nv.eff, div, divMin, moyenne: div ? nv.eff / div : 0,
     cours, parDisc, parDiscPond, total: Object.values(parDisc).reduce((s, x) => s + x, 0), alertes };

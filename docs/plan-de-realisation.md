@@ -20,7 +20,9 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 ## Lot 2 (démarré)
 - [x] B1 structure pédagogique et B2 couverture des emplois, version Light (`src/lib/structure.ts`, `emplois.ts` ; détail et simplifications dans `docs/b1-b2-light.md`)
 - [ ] Recette : retrouver la carte des emplois de la rentrée en cours à l'ETP près (grille LFKL, postes en place et ORS réels à fournir)
-- [ ] B3 RH & masse salariale (isolé)
+- [x] B3 RH & masse salariale (isolé), IMP et décharges forfaitaires (`src/lib/rh.ts`, `docs/b3-rh-light.md`, migration 0003) — reste : import du fichier RH, droits d'accès dans le Worker, publication au registre des drivers
+- [x] IB, BFI et langue du pays hôte (malais) dans le référentiel
+- [ ] Liste des postes par discipline (à fournir)
 
 ## Décisions (1er octobre 2026)
 - **Établissement pilote : LFKL.**

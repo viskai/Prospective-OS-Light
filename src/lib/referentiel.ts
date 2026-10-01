@@ -1,7 +1,7 @@
-// Référentiel Light — voie générale uniquement (maternelle → terminale), tiré de l'outil « TRM en direct ».
-// Retirés : IB, BFI/DNL, voies technologiques, enseignements propres à l'établissement.
+// Référentiel Light — voie générale, IB Diploma et BFI (maternelle → terminale), tiré de l'outil « TRM en direct ».
+// Retirés : section internationale, DNL hors BFI, voies technologiques, enseignements propres à l'établissement.
 
-export type Cat = "LV" | "SCI" | "DED" | "SPE" | "OPT";
+export type Cat = "LV" | "SCI" | "DED" | "SPE" | "OPT" | "IB";
 export type Cycle = "maternelle" | "elementaire" | "college" | "lycee";
 
 export interface Cours {
@@ -13,7 +13,8 @@ export interface Cours {
   kind: "classe" | "choix";
   gr?: number;                   // classe : heures assurées en groupes (le reste en classe entière)
   part?: number;                 // choix : part par défaut des élèves du niveau (peut dépasser 1 : plusieurs choix par élève)
-  groupe?: string;               // contrôle de cohérence : "lv2" (somme des parts = 1), "spe" (= nb de spécialités)
+  groupe?: string;               // contrôle de cohérence : "lv2" (somme des parts = 1), "spe" (= nb de spécialités), "ib" (= 6 matières)
+  actifDefaut?: boolean;         // false : cours à activer explicitement (NiveauIn.actifs)
 }
 
 export interface NiveauDef {
@@ -33,6 +34,8 @@ export const DISCIPLINES: { id: string; nom: string }[] = [
   { id: "MAT", nom: "Mathématiques" }, { id: "SPC", nom: "Physique-chimie" }, { id: "SVT", nom: "SVT" },
   { id: "TEC", nom: "Technologie / NSI" }, { id: "APL", nom: "Arts plastiques" }, { id: "MUS", nom: "Éducation musicale" },
   { id: "EPS", nom: "EPS" },
+  { id: "ECO", nom: "Éco-gestion" },
+  { id: "LVH", nom: "Langue du pays hôte (malais)" },
 ];
 
 const PE = { PE: 1 };
@@ -46,14 +49,17 @@ const LV2_PARTS: [string, string, number][] = [["ESP", "espagnol", 0.5], ["ALL",
 const lv2 = (h: number, prefixe: string, actif = 1): Cours[] =>
   LV2_PARTS.map(([d, n, p]) => choix(`lv2-${d}`, `${prefixe} ${n}`, { [d]: 1 }, h, "LV", p * actif, "lv2"));
 
+/** Langue du pays hôte (malais), hors grille : enseignée par un spécialiste (discipline LVH), pas par le PE. Volumes à confirmer. */
+const lvh = (h: number, actifDefaut = true): Cours => ({ ...classe("lvh", "Langue du pays hôte", { LVH: 1 }, h, "LV"), actifDefaut });
+
 const maternelle = (id: string, nom: string): NiveauDef =>
   ({ id, nom, court: id.toUpperCase(), cycle: "maternelle", marge: 0, cours: [classe("dom", "Domaines d'apprentissage", PE, 24)] });
 const cycle2 = (id: string, nom: string): NiveauDef => ({ id, nom, court: id.toUpperCase(), cycle: "elementaire", marge: 0, cours: [
   classe("fr", "Français", PE, 10), classe("ma", "Mathématiques", PE, 5), classe("lv", "Langue vivante", PE, 1.5, "LV"),
-  classe("eps", "EPS", PE, 3), classe("art", "Enseignements artistiques", PE, 2), classe("qlm", "Questionner le monde, EMC", PE, 2.5)] });
+  classe("eps", "EPS", PE, 3), classe("art", "Enseignements artistiques", PE, 2), classe("qlm", "Questionner le monde, EMC", PE, 2.5), lvh(2)] });
 const cycle3 = (id: string, nom: string): NiveauDef => ({ id, nom, court: id.toUpperCase(), cycle: "elementaire", marge: 0, cours: [
   classe("fr", "Français", PE, 8), classe("ma", "Mathématiques", PE, 5), classe("lv", "Langue vivante", PE, 1.5, "LV"),
-  classe("eps", "EPS", PE, 3), classe("art", "Enseignements artistiques", PE, 2), classe("sci", "Sciences et technologie", PE, 2), classe("hg", "Histoire-géographie, EMC", PE, 2.5)] });
+  classe("eps", "EPS", PE, 3), classe("art", "Enseignements artistiques", PE, 2), classe("sci", "Sciences et technologie", PE, 2), classe("hg", "Histoire-géographie, EMC", PE, 2.5), lvh(2)] });
 
 interface HCollege { fr: number; ma: number; lv1: number; hg: number; eps: number; lat?: number }
 const college = (id: string, h: HCollege): NiveauDef => ({ id, nom: id, court: id, cycle: "college", marge: 3, cours: [
@@ -65,6 +71,7 @@ const college = (id: string, h: HCollege): NiveauDef => ({ id, nom: id, court: i
     : [classe("svt", "SVT", { SVT: 1 }, 1.5, "SCI", 1.5), classe("pc", "Physique-chimie", { SPC: 1 }, 1.5, "SCI", 1.5), classe("tec", "Technologie", { TEC: 1 }, 1.5, "SCI", 1.5)]),
   classe("apl", "Arts plastiques", { APL: 1 }, 1), classe("mus", "Éducation musicale", { MUS: 1 }, 1), classe("eps", "EPS", { EPS: 1 }, h.eps),
   ...(id === "6e" ? [] : lv2(2.5, "LV2")),
+  lvh(2),
   ...(h.lat ? [choix("lat", "Latin (LCA)", { LET: 1 }, h.lat, "OPT", 0.1)] : []),
   ...(id === "4e" || id === "3e" ? [choix("lce", "Langues et cultures européennes", { ANG: 1 }, 2, "OPT", 0)] : []),
 ] });
@@ -86,6 +93,38 @@ const SPE: [string, string, Record<string, number>, number, number][] = [
 const spes = (h: number, terminale: boolean): Cours[] =>
   SPE.map(([id, label, parts, p1, pt]) => choix(`s-${id}`, label, parts, h, "SPE", terminale ? pt : p1, "spe"));
 
+
+/** IB Diploma : 6 matières par élève (3 HL à 4 h, 3 SL à 3 h), TOK 1,5 h. Parts par défaut uniformes = placeholders à paramétrer. */
+const IB_MATIERES: [string, string, Record<string, number>][] = [
+  ["ENGA", "Group 1 · English A", { ANG: 1 }], ["FRA", "Group 1 · Français A", { LET: 1 }], ["FRB", "Group 2 · French B / ab initio", { LET: 1 }],
+  ["ESPB", "Group 2 · Spanish B", { ESP: 1 }], ["CHIB", "Group 2 · Mandarin B", { CHI: 1 }],
+  ["ECO", "Group 3 · Economics", { SES: 1 }], ["HIS", "Group 3 · History", { HG: 1 }], ["GEO", "Group 3 · Geography", { HG: 1 }],
+  ["PSY", "Group 3 · Psychology", { PHI: 1 }], ["BUS", "Group 3 · Business Management", { ECO: 1 }],
+  ["BIO", "Group 4 · Biology", { SVT: 1 }], ["CHE", "Group 4 · Chemistry", { SPC: 1 }], ["PHY", "Group 4 · Physics", { SPC: 1 }],
+  ["CS", "Group 4 · Computer Science", { TEC: 1 }], ["MAA", "Group 5 · Maths Analysis & Approaches", { MAT: 1 }],
+  ["MAI", "Group 5 · Maths Applications & Interpretation", { MAT: 1 }], ["VA", "Group 6 · Visual Arts", { APL: 1 }], ["MUSI", "Group 6 · Music", { MUS: 1 }],
+];
+export const IB_HL = 4, IB_SL = 3, IB_TOK = 1.5;
+const ib = (id: string, nom: string, court: string): NiveauDef => ({ id, nom, court, cycle: "lycee", marge: 0, cours: [
+  classe("tok", "Theory of Knowledge (TOK)", { PHI: 1 }, IB_TOK, "IB"),
+  ...IB_MATIERES.flatMap(([k, lib, parts]) => [
+    choix(`ib-${k}-hl`, `${lib} HL`, parts, IB_HL, "IB", 1 / IB_MATIERES.length * 3, "ib"),
+    choix(`ib-${k}-sl`, `${lib} SL`, parts, IB_SL, "IB", 1 / IB_MATIERES.length * 3, "ib"),
+  ]),
+  choix("ib-eps", "EPS (établissement)", { EPS: 1 }, 2, "OPT", 0),
+] });
+
+/** BFI : composantes ajoutées aux élèves du dispositif en 1ère et terminale. Effectif saisi (NiveauIn.bfi.eff). */
+export interface ComposanteDispositif { id: string; label: string; role: "langue" | "dnl"; h: number }
+export const BFI: { id: string; nom: string; niveaux: string[]; composantes: ComposanteDispositif[]; langueDefaut: string; dnlDefaut: string[]; effDefaut: number } = {
+  id: "bfi", nom: "Baccalauréat français international (BFI)", niveaux: ["1g", "tg"], langueDefaut: "ANG", dnlDefaut: ["HG"], effDefaut: 24,
+  composantes: [
+    { id: "cdm", label: "Connaissance du monde", role: "langue", h: 2 },
+    { id: "acl", label: "Approfondissement culturel et linguistique", role: "langue", h: 2 },
+    { id: "dnl", label: "DNL en langue (part en langue)", role: "dnl", h: 2 },
+  ],
+};
+
 export const NIVEAUX_DEF: NiveauDef[] = [
   maternelle("ps", "Petite section"), maternelle("ms", "Moyenne section"), maternelle("gs", "Grande section"),
   cycle2("cp", "CP"), cycle2("ce1", "CE1"), cycle2("ce2", "CE2"), cycle3("cm1", "CM1"), cycle3("cm2", "CM2"),
@@ -95,22 +134,23 @@ export const NIVEAUX_DEF: NiveauDef[] = [
     classe("fr", "Français", { LET: 1 }, 4), classe("ma", "Mathématiques", { MAT: 1 }, 4), classe("hg", "Histoire-géographie", { HG: 1 }, 3),
     classe("emc", "EMC", { HG: 1 }, 0.5), classe("lva", "LVA anglais", { ANG: 1 }, 3, "LV", 3), classe("ses", "SES", { SES: 1 }, 1.5),
     classe("pc", "Physique-chimie", { SPC: 1 }, 3, "SCI"), classe("svt", "SVT", { SVT: 1 }, 1.5, "SCI"), classe("snt", "SNT", { TEC: 1 }, 1.5, "SCI"),
-    classe("eps", "EPS", { EPS: 1 }, 2), ...lv2(2.5, "LV2"), ...optionsLycee()] },
+    classe("eps", "EPS", { EPS: 1 }, 2), lvh(1, false), ...lv2(2.5, "LV2"), ...optionsLycee()] },
   { id: "1g", nom: "Première générale", court: "1ère", cycle: "lycee", cycleTerminal: true, marge: 8, cours: [
     classe("fr", "Français", { LET: 1 }, 4), classe("hg", "Histoire-géographie", { HG: 1 }, 3), classe("emc", "EMC", { HG: 1 }, 0.5),
     classe("lva", "LVA anglais", { ANG: 1 }, 2.5, "LV", 2.5), classe("es", "Enseignement scientifique", { SPC: 0.5, SVT: 0.5 }, 2, "SCI"),
-    classe("eps", "EPS", { EPS: 1 }, 2), ...lv2(2, "LV2"), ...spes(4, false), ...optionsLycee()] },
+    classe("eps", "EPS", { EPS: 1 }, 2), lvh(1, false), ...lv2(2, "LV2"), ...spes(4, false), ...optionsLycee()] },
   { id: "tg", nom: "Terminale générale", court: "Tle", cycle: "lycee", cycleTerminal: true, marge: 8, cours: [
     classe("phi", "Philosophie", { PHI: 1 }, 4), classe("hg", "Histoire-géographie", { HG: 1 }, 3), classe("emc", "EMC", { HG: 1 }, 0.5),
     classe("lva", "LVA anglais", { ANG: 1 }, 2, "LV", 2), classe("es", "Enseignement scientifique", { SPC: 0.5, SVT: 0.5 }, 2, "SCI"),
-    classe("eps", "EPS", { EPS: 1 }, 2), ...lv2(2, "LV2"), ...spes(6, true),
+    classe("eps", "EPS", { EPS: 1 }, 2), lvh(1, false), ...lv2(2, "LV2"), ...spes(6, true),
     choix("mex", "Option maths expertes", { MAT: 1 }, 3, "OPT", 0), choix("mco", "Option maths complémentaires", { MAT: 1 }, 3, "OPT", 0),
-    choix("dgemc", "Option DGEMC", { SES: 1 }, 3, "OPT", 0), ...optionsLycee()] },
+    choix("dgemc", "Option DGEMC", { ECO: 1 }, 3, "OPT", 0), ...optionsLycee()] },
+  ib("ib1", "IB Diploma — 1re année (Y12)", "IB1"), ib("ib2", "IB Diploma — 2e année (Y13)", "IB2"),
 ];
 
 export const REGLAGES_DEFAUT = {
   plafondClasse: { maternelle: 26, elementaire: 26, college: 28, lycee: 35 } as Record<Cycle, number>,
-  plafondGroupe: { LV: 24, SCI: 22, DED: 24, SPE: 32, OPT: 30 } as Record<Cat, number>,
+  plafondGroupe: { LV: 24, SCI: 22, DED: 24, SPE: 32, OPT: 30, IB: 20 } as Record<Cat, number>,
   maxBloc: 4,
   ponderation: true,   // 1,1 h en cycle terminal, hors EPS (décret 2014-940)
   ponderationFacteur: 1.1,

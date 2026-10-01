@@ -43,7 +43,17 @@ export function registreInitial(): DriverDef[] {
   out.push(d("rev.remise", "Remises et fratries", "% brut", "A2", 0.5));
   out.push(d("aefe.pfc", "Taux de PFC AEFE", "% brut", "A3", 0.5));
   out.push(d("aefe.abattement", "Abattement sur la PFC", "%", "A3"));
-  out.push(d("pay.gvt", "Revalorisation et GVT", "%/an", "B3", 0.25));
+  out.push(d("pay.revalorisation", "Revalorisation des grilles", "%/an", "B3", 0.25));
+  out.push(d("pay.gvt", "GVT (glissement des carrières, hors résidents)", "%/an", "B3", 0.25));
+  out.push(d("pay.tauxHSA", "Taux annuel d'une HSA hebdomadaire", "AUD", "B3", 100));
+  out.push(d("pay.chargesPct", "Charges employeur", "% du salaire", "B3", 0.5));
+  out.push(d("pay.contributionResident", "Coût d'un résident pour l'établissement", "AUD/an", "B3", 1000));
+  out.push(d("pay.minGroupe", "Seuil de confidentialité des agrégats", "postes", "B3"));
+  out.push(d("forfait.imp.unites", "Nombre d'IMP", "unités", "B3"));
+  out.push(d("forfait.imp.montant", "Montant d'une IMP", "AUD/an", "B3", 50));
+  out.push(d("forfait.decharge.unites", "Nombre de décharges", "unités", "B3"));
+  out.push(d("forfait.decharge.montant", "Montant forfaitaire d'une décharge", "AUD/an", "B3", 500));
+  out.push(d("struct.lvh.h", "Heures de langue du pays hôte (malais)", "h/division", "B1", 0.5));
   out.push(d("sg.indexation", "Indexation des charges", "%/an", "C1", 0.25));
   out.push(d("fin.change.MYR", "Taux de change MYR", "MYR/AUD", "global", 0.01));
   out.push(d("fin.change.EUR", "Taux de change EUR", "EUR/AUD", "global", 0.01));
