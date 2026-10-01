@@ -1,0 +1,11 @@
+name = "os-light"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "os-light"
+database_id = "REPLACE_WITH_D1_ID"   # wrangler d1 create os-light
+migrations_dir = "migrations"
+
+# Authentification : Cloudflare Access (code à usage unique), configurée côté dashboard Cloudflare.

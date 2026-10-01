@@ -1,0 +1,532 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>OS Light — prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout : barre d'en-tête + onglets par couche, puis colonne hypothèses à gauche et résultats à droite. Accent "bleu plan" pour le pilotage, ocre pour l'immobilier. */
+:root{
+  --bg:#f3f4f6; --surface:#ffffff; --surface-2:#f8f9fb; --ink:#161d2b; --muted:#5a6375; --line:#dde1e8; --line-2:#eceef2;
+  --accent:#2a4cc4; --accent-soft:rgba(42,76,196,.10); --build:#b06f0a; --build-soft:rgba(176,111,10,.12);
+  --good:#1f7a4d; --warn:#c2560c; --crit:#b42318; --good-soft:rgba(31,122,77,.12); --warn-soft:rgba(194,86,12,.12); --crit-soft:rgba(180,35,24,.10);
+  --s-central:#2a4cc4; --s-favorable:#0f8b8d; --s-stress:#8b4fd6; --s-none:#6b7385;
+  --sch-Mat:#e3a33b; --sch-Elem:#5a8fd8; --sch-Col:#2f9e8f; --sch-Lyc:#9a6fd0;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10141c; --surface:#171c26; --surface-2:#1c2230; --ink:#e7eaf0; --muted:#9aa3b5; --line:#2b3342; --line-2:#222937;
+  --accent:#7d9bff; --accent-soft:rgba(125,155,255,.14); --build:#e2a24a; --build-soft:rgba(226,162,74,.14);
+  --good:#4cc38a; --warn:#f08a4b; --crit:#ff6b5e; --good-soft:rgba(76,195,138,.14); --warn-soft:rgba(240,138,75,.14); --crit-soft:rgba(255,107,94,.13);
+  --s-central:#7d9bff; --s-favorable:#3cc7c4; --s-stress:#b98cff; --s-none:#8f98ab;
+  --sch-Mat:#e9b45a; --sch-Elem:#7aa7ec; --sch-Col:#4cbcab; --sch-Lyc:#b393e6; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10141c; --surface:#171c26; --surface-2:#1c2230; --ink:#e7eaf0; --muted:#9aa3b5; --line:#2b3342; --line-2:#222937;
+  --accent:#7d9bff; --accent-soft:rgba(125,155,255,.14); --build:#e2a24a; --build-soft:rgba(226,162,74,.14);
+  --good:#4cc38a; --warn:#f08a4b; --crit:#ff6b5e; --good-soft:rgba(76,195,138,.14); --warn-soft:rgba(240,138,75,.14); --crit-soft:rgba(255,107,94,.13);
+  --s-central:#7d9bff; --s-favorable:#3cc7c4; --s-stress:#b98cff; --s-none:#8f98ab;
+  --sch-Mat:#e9b45a; --sch-Elem:#7aa7ec; --sch-Col:#4cbcab; --sch-Lyc:#b393e6; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;padding-block:12px 8px}
+.brand h1{font-family:var(--f-display);font-weight:650;font-size:20px;margin:0;letter-spacing:-.01em}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.ctrls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ctrls label{display:flex;flex-direction:column;font-size:11px;color:var(--muted);gap:2px;text-transform:uppercase;letter-spacing:.05em}
+select,input[type=number],input[type=text]{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+input[type=number]{width:96px;text-align:right;font-variant-numeric:tabular-nums}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit;font-size:13px;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.ghost{background:transparent}
+button:hover{border-color:var(--accent)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding-block:4px 0;scrollbar-width:thin}
+.tab{position:relative;flex:0 0 auto;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;background:transparent;padding:8px 12px 9px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;color:var(--muted)}
+.tab b{font-weight:600;font-size:13px;color:var(--ink)}
+.tab small{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.tab.on{background:var(--surface);border-color:var(--line);color:var(--accent)}
+.tab.on b{color:var(--accent)}
+.tab.sep{margin-left:10px}
+.tab .dot{position:absolute;top:7px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--build);opacity:0}
+.tab.pulse .dot{animation:pulse 1.6s ease-out}
+@keyframes pulse{0%{opacity:1;transform:scale(1.5)}70%{opacity:.9}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.tab.pulse .dot{animation:none;opacity:1}}
+.recalc{font-size:12px;color:var(--muted);min-height:18px;padding-block:4px}
+.recalc span{color:var(--build);font-weight:600}
+.banner{margin-top:14px;background:var(--build-soft);border:1px solid color-mix(in srgb,var(--build) 30%,transparent);border-radius:8px;padding:8px 12px;font-size:12.5px}
+h2{font-family:var(--f-display);font-weight:650;font-size:22px;margin:20px 0 2px;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:600}
+.lead{color:var(--muted);margin:0 0 12px;max-width:80ch}
+.io{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12px;margin-bottom:16px}
+.io .grp{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.io .lbl{color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-size:10.5px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 9px;font-size:12px;color:var(--ink)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.in::before{content:"← ";color:var(--muted)}
+.chip.out::after{content:" →";color:var(--muted)}
+.cols{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:18px;align-items:start}
+.cols.stack{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.res{display:grid;gap:16px;min-width:0}
+.fld{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--line-2);font-size:13px}
+.fld:last-child{border-bottom:none}
+.fld .inp{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.fld em{font-style:normal;color:var(--muted);font-size:11.5px;width:62px}
+.fgroup+.fgroup{margin-top:14px}
+.note{font-size:12px;color:var(--muted);margin:8px 0 0}
+.tw{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-2)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+thead th{color:var(--muted);font-weight:600;font-size:11.5px;border-bottom:1px solid var(--line)}
+tr.sub td{color:var(--muted)}
+tr.tot td{font-weight:700;border-top:1px solid var(--line)}
+tr.hd td{font-weight:600;color:var(--accent);padding-top:12px}
+td.neg{color:var(--crit)} td.pos{color:var(--good)}
+td.gap-bad{background:var(--crit-soft);color:var(--crit);font-weight:600}
+td.gap-ok{color:var(--good)}
+.chart{width:100%;height:auto;display:block}
+.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.legend i.sq{height:10px;width:10px}
+.legend i.dash{background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 7px)!important;height:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-family:var(--f-display);font-size:24px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi.good{border-left:4px solid var(--good)} .kpi.warn{border-left:4px solid var(--warn)} .kpi.crit{border-left:4px solid var(--crit)}
+.alerts{display:grid;gap:6px}
+.alert{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:7px 10px;border-radius:7px}
+.alert .pill{flex:0 0 auto;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;padding:2px 7px;border-radius:999px}
+.alert.crit{background:var(--crit-soft)} .alert.crit .pill{background:var(--crit);color:#fff}
+.alert.warn{background:var(--warn-soft)} .alert.warn .pill{background:var(--warn);color:#fff}
+.alert.info{background:var(--accent-soft)} .alert.info .pill{background:var(--accent);color:#fff}
+.alert.ok{background:var(--good-soft)} .alert.ok .pill{background:var(--good);color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:12px}
+.mini h4{margin:0 0 4px;font-size:13px}
+.proj td input[type=number]{width:74px}
+.proj td input[type=text]{width:170px}
+.proj td select{max-width:120px}
+.sugg{display:grid;gap:6px;margin-top:10px}
+.sugg div{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--build-soft);border-radius:7px;padding:7px 10px;font-size:13px}
+.decision td:first-child{font-weight:500}
+.matrix td,.matrix th{white-space:normal;text-align:left;vertical-align:top;font-size:11.5px;min-width:96px}
+.matrix td.f{background:var(--accent-soft);color:var(--ink)}
+.matrix td.loop{background:var(--build-soft)}
+.matrix th button{font-size:11.5px;padding:2px 6px}
+.tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);margin-left:6px}
+.scen-t input[type=number]{width:72px}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="top-row">
+    <div class="brand"><h1>OS Light · prototype</h1><p>Établissement fictif inspiré de LCS · montants en milliers d'AUD (k AUD) · 2026-27 → 2035-36</p></div>
+    <div class="ctrls">
+      <label for="g-scen">Scénario d'effectifs<select id="g-scen" data-path="scenario" data-type="str"></select></label>
+      <label for="g-mode">Jauge<select id="g-mode" data-path="mode" data-type="str"><option value="cap">Plafonnée par les salles</option><option value="dem">Demande non plafonnée</option></select></label>
+      <button id="reset" class="ghost" type="button">Réinitialiser</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Modules"></nav>
+</div></header>
+
+<main class="wrap">
+  <div class="banner">Prototype d'ergonomie : toutes les valeurs sont des exemples à remplacer. Chaque modification recalcule l'ensemble ; un point ocre signale les onglets dont les résultats viennent de changer.</div>
+  <div class="recalc" id="recalc" aria-live="polite"></div>
+  <div id="view"></div>
+</main>
+
+<script>
+(()=>{
+const Y=10, YEARS=[...Array(Y)].map((_,i)=>`${2026+i}-${String(27+i).padStart(2,'0')}`), YS=YEARS.map(y=>y.slice(2));
+const range=n=>[...Array(n).keys()], sum=a=>a.reduce((x,y)=>x+(+y||0),0);
+const SCH=['Mat','Elem','Col','Lyc'], SN={Mat:'Maternelle',Elem:'Élémentaire',Col:'Collège',Lyc:'Lycée'};
+const LEVELS=[['PS','Mat',64,null],['MS','Mat',100,168.5],['GS','Mat',107,108.0],['CP','Elem',102,99.6],['CE1','Elem',119,102.4],['CE2','Elem',102,100.4],['CM1','Elem',99,103.0],['CM2','Elem',104,101.8],['6e','Col',104,101.4],['5e','Col',107,99.2],['4e','Col',86,97.2],['3e','Col',64,100.6],['2nde','Lyc',70,95.1],['1ère','Lyc',66,103.1],['Tle','Lyc',60,103.9]];
+const SC_KEYS=['central','favorable','stress'];
+
+const DEFAULT={
+  scenario:'central', mode:'cap',
+  lv:Object.fromEntries(LEVELS.map(L=>[L[0],L[3]==null?{e0:L[2]}:{e0:L[2],r:L[3]}])),
+  scen:{central:{label:'Central',entry:70,growth:0,dRet:0,dSec:0},favorable:{label:'Favorable',entry:76,growth:3,dRet:2,dSec:3},stress:{label:'Stress test',entry:55,growth:0,dRet:-3,dSec:-2}},
+  sch:{Mat:{cap:25,rooms:11,fee:22000,teach:1.3},Elem:{cap:25,rooms:21,fee:23500,teach:1.35},Col:{cap:27,rooms:16,fee:26500,teach:1.75},Lyc:{cap:27,rooms:12,fee:29000,teach:2.1}},
+  rev:{inc:3.5,remise:6,insc:3500,other:800},
+  aefe:{pfc:6,abat:0,subv:150,bourses:900},
+  staff:{res:12,nonFix:65,nonPer100:3},
+  pay:{local:145,res:95,adm:105,gvt:3.5},
+  sg:{contracts:2200,varStu:900,surface:14000,m2cost:85,peda:450,idx:3},
+  space:{m2room:120,costm2:9000},
+  projects:[
+    {name:'Extension élémentaire',school:'Elem',rooms:4,m2:480,costm2:9000,year:2,dur:2,amort:30,loan:50,fund:10},
+    {name:'Salle polyvalente',school:'',rooms:0,m2:1200,costm2:8000,year:4,dur:2,amort:30,loan:0,fund:40},
+    {name:'Bâtiment lycée',school:'Lyc',rooms:8,m2:960,costm2:9000,year:6,dur:2,amort:30,loan:60,fund:20}],
+  capex:{renew:1500,renewLife:8,existNet:25000,existDot:1200},
+  fin:{cash0:12000,rate:6,loanYears:20,depRate:3,odRate:9,minMonths:3,fundAnnual:0}
+};
+const clone=o=>JSON.parse(JSON.stringify(o));
+let ST; try{ST=JSON.parse(localStorage.getItem('osLight.v1'))}catch(e){}
+if(!ST||!ST.sch) ST=clone(DEFAULT);
+const save=()=>{try{localStorage.setItem('osLight.v1',JSON.stringify(ST))}catch(e){}};
+
+/* ---------- Registre des drivers (source unique des libellés) ---------- */
+const DRV=[]; const add=(p,l,u,m,step=1)=>DRV.push({p,l,u,m,step});
+SCH.forEach(s=>add(`sch.${s}.cap`,`Capacité par classe — ${SN[s]}`,'élèves','eff'));
+SC_KEYS.forEach(k=>{const n=DEFAULT.scen[k].label;add(`scen.${k}.entry`,`Entrée en PS — ${n}`,'élèves/an','eff');add(`scen.${k}.growth`,`Croissance de l'entrée — ${n}`,'%/an','eff',0.5);add(`scen.${k}.dRet`,`Δ rétention tous niveaux — ${n}`,'pts','eff',0.5);add(`scen.${k}.dSec`,`Δ rétention secondaire — ${n}`,'pts','eff',0.5)});
+LEVELS.forEach(L=>{add(`lv.${L[0]}.e0`,`Effectif 2026-27 — ${L[0]}`,'élèves','eff');if(L[3]!=null)add(`lv.${L[0]}.r`,`Taux de rétention — ${L[0]}`,'%','eff',0.1)});
+SCH.forEach(s=>add(`sch.${s}.fee`,`Droits de scolarité — ${SN[s]}`,'AUD/an','rev',100));
+add('rev.inc','Hausse annuelle des tarifs','%','rev',0.5);add('rev.remise','Remises et fratries','% brut','rev',0.5);add('rev.insc','Frais de 1re inscription','AUD','rev',100);add('rev.other','Autres recettes par élève','AUD','rev',50);
+add('aefe.pfc','Taux de PFC AEFE','% brut','aefe',0.5);add('aefe.abat','Abattement sur la PFC','%','aefe',1);add('aefe.subv','Subventions d\'exploitation','k AUD/an','aefe',10);add('aefe.bourses','Bourses de l\'État (info)','k AUD/an','aefe',10);
+SCH.forEach(s=>add(`sch.${s}.teach`,`ETP enseignant par classe — ${SN[s]}`,'ETP','emp',0.05));
+add('staff.res','Postes de résidents AEFE','postes','emp');add('staff.nonFix','Non enseignants (socle)','ETP','emp');add('staff.nonPer100','Non enseignants par 100 élèves','ETP','emp',0.5);
+add('pay.local','Coût moyen enseignant local','k AUD/ETP','pay');add('pay.res','Coût d\'un résident pour l\'établissement','k AUD/ETP','pay');add('pay.adm','Coût moyen non enseignant','k AUD/ETP','pay');add('pay.gvt','Revalorisation et GVT','%/an','pay',0.25);
+add('sg.contracts','Contrats fixes','k AUD/an','sg',50);add('sg.varStu','Charges variables par élève','AUD','sg',50);add('sg.surface','Surface existante','m²','sg',100);add('sg.m2cost','Entretien et énergie','AUD/m²/an','sg',5);add('sg.peda','Fonctionnement pédagogique par élève','AUD','sg',25);add('sg.idx','Indexation des charges','%/an','sg',0.25);
+SCH.forEach(s=>add(`sch.${s}.rooms`,`Salles de classe existantes — ${SN[s]}`,'salles','esp'));
+add('space.m2room','Surface brute par salle construite','m²','esp',5);add('space.costm2','Coût de construction par défaut','AUD/m²','esp',100);
+add('capex.renew','CAPEX de renouvellement','k AUD/an','capex',50);add('capex.renewLife','Durée d\'amortissement du renouvellement','ans','capex');add('capex.existNet','Immobilisations nettes existantes','k AUD','capex',100);add('capex.existDot','Dotation annuelle existante','k AUD/an','capex',50);
+add('fin.cash0','Trésorerie d\'ouverture','k AUD','fin',100);add('fin.rate','Taux d\'emprunt','%','fin',0.25);add('fin.loanYears','Durée des emprunts','ans','fin');add('fin.depRate','Rémunération des placements','%','fin',0.25);add('fin.odRate','Coût du découvert','%','fin',0.25);add('fin.minMonths','Seuil de trésorerie','mois de charges','fin',0.5);add('fin.fundAnnual','Campagne annuelle de dons','k AUD/an','fin',10);
+const DMAP=Object.fromEntries(DRV.map(d=>[d.p,d]));
+
+const getP=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
+const setP=(o,p,v)=>{const ks=p.split('.');let a=o;ks.slice(0,-1).forEach(k=>a=a[k]);a[ks.at(-1)]=v};
+
+/* ---------- Moteur ---------- */
+function cohort(sc,capped,rooms){
+  const eff=[],app=[];
+  eff[0]=LEVELS.map(L=>+ST.lv[L[0]].e0||0);
+  app[0]=LEVELS.map((L,i)=>{if(i===0)return eff[0][0];const r=(+ST.lv[L[0]].r||100)/100;return r>1?eff[0][i]*(r-1)/r:0});
+  for(let t=1;t<Y;t++){
+    const pas=[],ap=[];
+    LEVELS.forEach((L,i)=>{
+      if(i===0){pas[i]=0;ap[i]=(+sc.entry||0)*Math.pow(1+(+sc.growth||0)/100,t-1);return}
+      const c=eff[t-1][i-1], rate=Math.max(0,(+ST.lv[L[0]].r||0)/100+(+sc.dRet||0)/100+(i>=8?(+sc.dSec||0)/100:0));
+      pas[i]=c*Math.min(rate,1); ap[i]=c*Math.max(rate-1,0);
+    });
+    if(capped) SCH.forEach(s=>{
+      const idx=LEVELS.map((L,i)=>L[1]===s?i:-1).filter(i=>i>=0);
+      const I=sum(idx.map(i=>pas[i])),A=sum(idx.map(i=>ap[i])),C=rooms[t][s]*ST.sch[s].cap;
+      if(I+A>C){const f=A>0?Math.max(0,C-I)/A:0;idx.forEach(i=>ap[i]*=f)}
+    });
+    eff[t]=pas.map((p,i)=>p+ap[i]); app[t]=ap;
+  }
+  return {eff,app};
+}
+const bySch=L=>{const o={Mat:0,Elem:0,Col:0,Lyc:0};LEVELS.forEach((lv,i)=>o[lv[1]]+=L[i]);return o};
+const pcost=p=>(+p.m2||0)*(+p.costm2||0)/1000;
+
+function compute(key,withProj){
+  const sc=ST.scen[key], P=withProj?ST.projects:[];
+  const rooms=range(Y).map(t=>{const o={};SCH.forEach(s=>o[s]=(+ST.sch[s].rooms||0)+sum(P.filter(p=>p.school===s&&+p.year<=t).map(p=>+p.rooms||0)));return o});
+  const dem=cohort(sc,false,rooms), act=ST.mode==='cap'?cohort(sc,true,rooms):dem;
+  const R={key,withProj,rooms,effL:act.eff,demL:dem.eff};
+  R.effS=act.eff.map(bySch); R.demS=dem.eff.map(bySch);
+  R.effTot=R.effS.map(o=>sum(SCH.map(s=>o[s]))); R.demTot=R.demS.map(o=>sum(SCH.map(s=>o[s])));
+  R.capS=rooms.map(o=>Object.fromEntries(SCH.map(s=>[s,o[s]*ST.sch[s].cap]))); R.capTot=R.capS.map(o=>sum(SCH.map(s=>o[s])));
+  R.need=R.demS.map(o=>Object.fromEntries(SCH.map(s=>[s,Math.ceil(o[s]/ST.sch[s].cap-1e-9)])));
+  R.gap=range(Y).map(t=>Object.fromEntries(SCH.map(s=>[s,R.need[t][s]-rooms[t][s]])));
+  R.gapTot=R.gap.map(o=>sum(SCH.map(s=>Math.max(0,o[s]))));
+  R.lost=range(Y).map(t=>R.demTot[t]-R.effTot[t]);
+  R.newStu=act.app.map(a=>sum(a));
+  const projs=P.map(p=>{const cost=pcost(p),dur=Math.max(1,Math.round(+p.dur||1)),ys=[];for(let k=dur;k>=1;k--)ys.push(Math.max(0,+p.year-k));if(+p.year===0){ys.length=0;ys.push(0)}return {...p,cost,ys,share:cost/ys.length}});
+  R.projs=projs;
+  const F=ST.fin, r=F.rate/100, n=Math.max(1,+F.loanYears||1), ann=A=>r>0?A*r/(1-Math.pow(1+r,-n)):A/n;
+  const K=['tuitionG','remises','tuitionN','insc','other','subv','finInc','prod','payroll','payLocal','payRes','payAdm','sg','sgFix','sgVar','sgM2','sgPeda','pfc','amort','amortP','amortR','amortE','interest','od','charges','result','caf','capex','capexP','renew','draws','principal','fund','cashOpen','cash','immos','debt','equity','fa','check','teach','non','surface','months','classesTot'];
+  K.forEach(k=>R[k]=[]); R.classes=[];
+  const tr=[]; let cash=+F.cash0||0, immos=+ST.capex.existNet||0, debt=0, equity=immos+cash, fa=0, exRem=immos;
+  for(let t=0;t<Y;t++){
+    const fI=Math.pow(1+ST.rev.inc/100,t), fX=Math.pow(1+ST.sg.idx/100,t), fG=Math.pow(1+ST.pay.gvt/100,t);
+    const e=R.effS[t], tot=R.effTot[t];
+    const tuitionG=sum(SCH.map(s=>e[s]*ST.sch[s].fee))*fI/1000, remises=tuitionG*ST.rev.remise/100, tuitionN=tuitionG-remises;
+    const insc=R.newStu[t]*ST.rev.insc*fI/1000, other=tot*ST.rev.other*fX/1000, subv=ST.aefe.subv*fX;
+    const pfc=tuitionG*ST.aefe.pfc/100*(1-ST.aefe.abat/100);
+    const cl=Object.fromEntries(SCH.map(s=>[s,Math.ceil(e[s]/ST.sch[s].cap-1e-9)]));
+    const teach=sum(SCH.map(s=>cl[s]*ST.sch[s].teach)), non=ST.staff.nonFix+ST.staff.nonPer100*tot/100;
+    const payRes=ST.staff.res*ST.pay.res*fG, payLocal=Math.max(0,teach-ST.staff.res)*ST.pay.local*fG, payAdm=non*ST.pay.adm*fG, payroll=payRes+payLocal+payAdm;
+    const surface=ST.sg.surface+sum(projs.filter(p=>+p.year<=t).map(p=>+p.m2||0));
+    const sgFix=ST.sg.contracts*fX, sgVar=tot*ST.sg.varStu/1000*fX, sgM2=surface*ST.sg.m2cost/1000*fX, sgPeda=tot*ST.sg.peda/1000*fX, sgv=sgFix+sgVar+sgM2+sgPeda;
+    const capexP=sum(projs.map(p=>p.ys.filter(y=>y===t).length*p.share)), renew=ST.capex.renew*fX;
+    R.renew[t]=renew;
+    const amortP=sum(projs.map(p=>t>=+p.year&&t<+p.year+(+p.amort||1)?p.cost/(+p.amort||1):0));
+    const life=Math.max(1,+ST.capex.renewLife||1); let amortR=0; for(let v=0;v<=t;v++) if(t-v<life) amortR+=R.renew[v]/life;
+    const amortE=Math.min(+ST.capex.existDot||0,exRem); exRem-=amortE;
+    const amort=amortP+amortR+amortE;
+    let interest=0,principal=0;
+    tr.forEach(x=>{if(x.y<t&&x.rem>1e-6){const i=x.rem*r,pr=Math.min(x.rem,x.ann-i);interest+=i;principal+=pr;x.rem-=pr}});
+    let draws=0,fund=+F.fundAnnual||0;
+    projs.forEach(p=>p.ys.forEach(y=>{if(y===t){const A=p.share*(+p.loan||0)/100;if(A>0){tr.push({y:t,rem:A,ann:ann(A)});draws+=A}fund+=p.share*(+p.fund||0)/100}}));
+    const finInc=cash>0?cash*F.depRate/100:0, od=cash<0?-cash*F.odRate/100:0;
+    const prod=tuitionN+insc+other+subv+finInc, charges=payroll+sgv+pfc+amort+interest+od, result=prod-charges;
+    const capex=capexP+renew, cashOpen=cash;
+    cash=cash+result+amort-capex+draws-principal+fund; immos+=capex-amort; debt+=draws-principal; equity+=result; fa+=fund;
+    const monthly=(payroll+sgv+pfc+interest+od)/12;
+    const row={tuitionG,remises,tuitionN,insc,other,subv,finInc,prod,payroll,payLocal,payRes,payAdm,sg:sgv,sgFix,sgVar,sgM2,sgPeda,pfc,amort,amortP,amortR,amortE,interest,od,charges,result,caf:result+amort,capex,capexP,draws,principal,fund,cashOpen,cash,immos,debt,equity,fa,check:(immos+cash)-(equity+fa+debt),teach,non,surface,months:cash/monthly,classesTot:sum(SCH.map(s=>cl[s]))};
+    Object.entries(row).forEach(([k,v])=>R[k][t]=v); R.classes[t]=cl;
+  }
+  R.minCash=Math.min(...R.cash); R.minYear=R.cash.indexOf(R.minCash); R.minMonths=R.months[R.minYear];
+  return R;
+}
+
+/* ---------- Format ---------- */
+const nf0=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}), nf1=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1,minimumFractionDigits:1});
+const k0=v=>{const r=Math.round(v);return nf0.format(r===0?0:r)}, m1=v=>nf1.format(v/1000)+' M', pct=v=>nf1.format(v)+' %';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Graphiques SVG ---------- */
+function ticks(mn,mx,n){if(mx-mn<1e-9){mx=mn+1}const s0=(mx-mn)/n,mag=Math.pow(10,Math.floor(Math.log10(s0))),e=s0/mag,st=(e>=7.5?10:e>=3.5?5:e>=1.5?2:1)*mag;const lo=Math.floor(mn/st)*st,hi=Math.ceil(mx/st)*st,o=[];for(let v=lo;v<=hi+st/2;v+=st)o.push(+v.toFixed(8));return o}
+function chart(o){
+  const W=720,H=o.h||250,ml=56,mr=16,mt=14,mb=26,iw=W-ml-mr,ih=H-mt-mb,fmt=o.fmt||k0;
+  let vals=[];(o.series||[]).forEach(s=>vals.push(...s.vals));(o.bars||[]).forEach(b=>vals.push(...b.vals));
+  if(o.stack)for(let t=0;t<Y;t++)vals.push(sum(o.stack.map(s=>s.vals[t])));(o.ref||[]).forEach(r=>vals.push(r.v));
+  const tk=ticks(Math.min(0,...vals),Math.max(...vals,0),o.nt||5),mn=tk[0],mx=tk.at(-1);
+  const cw=iw/Y,x=i=>ml+cw*(i+.5),y=v=>mt+ih*(1-(v-mn)/(mx-mn));
+  let g='';
+  tk.forEach(v=>{g+=`<line x1="${ml}" x2="${W-mr}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--line);stroke-width:${v===0?1.2:.6}"/><text x="${ml-6}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`});
+  if(o.stack){const bw=cw*.62;for(let t=0;t<Y;t++){let acc=0;o.stack.forEach(s=>{const v=s.vals[t];g+=`<rect x="${x(t)-bw/2}" width="${bw}" y="${y(acc+v)}" height="${Math.max(0,y(acc)-y(acc+v))}" style="fill:${s.color}"><title>${esc(s.name)} ${YEARS[t]} : ${fmt(v)}</title></rect>`;acc+=v})}}
+  if(o.bars){const nb=o.bars.length,bw=cw*.66/nb;o.bars.forEach((b,j)=>b.vals.forEach((v,t)=>{const x0=x(t)-cw*.33+j*bw;g+=`<rect x="${x0}" width="${bw-1}" y="${Math.min(y(v),y(0))}" height="${Math.abs(y(0)-y(v))}" rx="1.5" style="fill:${b.color}"><title>${esc(b.name)} ${YEARS[t]} : ${fmt(v)}</title></rect>`}))}
+  (o.ref||[]).forEach(r=>{g+=`<line x1="${ml}" x2="${W-mr}" y1="${y(r.v)}" y2="${y(r.v)}" style="stroke:${r.color||'var(--crit)'};stroke-width:1;stroke-dasharray:4 4"/><text x="${W-mr}" y="${y(r.v)-5}" text-anchor="end" style="fill:${r.color||'var(--crit)'}">${esc(r.label)}</text>`});
+  (o.series||[]).forEach(s=>{
+    let d='';
+    if(s.step){s.vals.forEach((v,t)=>{const a=ml+cw*t,b=a+cw;d+=(t?`L${a} ${y(v)}`:`M${a} ${y(v)}`)+`L${b} ${y(v)}`})}
+    else s.vals.forEach((v,t)=>d+=(t?'L':'M')+x(t)+' '+y(v));
+    g+=`<path d="${d}" fill="none" style="stroke:${s.color};stroke-width:${s.w||2};${s.dash?'stroke-dasharray:6 4;':''}"/>`;
+    if(!s.step&&!s.nodots)s.vals.forEach((v,t)=>{g+=`<circle cx="${x(t)}" cy="${y(v)}" r="${t===Y-1?3.6:2.4}" style="fill:${s.color}"><title>${esc(s.name)} ${YEARS[t]} : ${fmt(v)}</title></circle>`});
+  });
+  YS.forEach((l,t)=>g+=`<text x="${x(t)}" y="${H-8}" text-anchor="middle">${l}</text>`);
+  const items=[...(o.stack||[]).map(s=>({...s,sq:1})),...(o.bars||[]).map(s=>({...s,sq:1})),...(o.series||[])];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title||'')}">${g}</svg><div class="legend">${items.map(s=>`<span><i class="${s.sq?'sq':''} ${s.dash?'dash':''}" style="background:${s.color};color:${s.color}"></i>${esc(s.name)}</span>`).join('')}${(o.ref||[]).map(r=>`<span><i class="dash" style="color:${r.color||'var(--crit)'}"></i>${esc(r.label)}</span>`).join('')}</div>`;
+}
+
+/* ---------- UI helpers ---------- */
+const TABS=[
+  {id:'syn',code:'Restitution',name:'Synthèse'},
+  {id:'eff',code:'A1',name:'Effectifs & capacité',sep:1},{id:'rev',code:'A2',name:'Tarifs & recettes'},{id:'aefe',code:'A3',name:'AEFE & subventions'},
+  {id:'emp',code:'B1 · B2',name:'Structure & emplois',sep:1},{id:'pay',code:'B3',name:'Masse salariale'},
+  {id:'sg',code:'C1',name:'Services généraux',sep:1},
+  {id:'esp',code:'D1',name:'Besoins d\'espaces',sep:1},{id:'capex',code:'D2',name:'CAPEX'},{id:'fin',code:'D3 · P4',name:'Financement & trésorerie'},
+  {id:'etats',code:'P3',name:'États financiers',sep:1},{id:'reg',code:'P1',name:'Registre des drivers'},{id:'flux',code:'Carte',name:'Flux entre modules'}];
+const TN=Object.fromEntries(TABS.map(t=>[t.id,t.name]));
+const FLOWS=[
+  ['eff','rev','Élèves par école, nouveaux inscrits'],['eff','emp','Élèves par école → nombre de classes'],['eff','sg','Effectif total → charges variables'],['eff','esp','Demande d\'élèves par école'],
+  ['esp','eff','Salles disponibles → capacité (jauge plafonnée)'],['rev','aefe','Assiette des droits de scolarité → PFC'],['emp','pay','ETP enseignants et non enseignants'],
+  ['esp','capex','Projets : coût, calendrier, durée d\'amortissement'],['esp','sg','m² livrés à entretenir'],['capex','fin','Décaissements, emprunts tirés, fonds levés'],
+  ['capex','etats','Amortissements, immobilisations'],['rev','etats','Recettes'],['aefe','etats','PFC, subventions'],['pay','etats','Masse salariale'],['sg','etats','Charges de fonctionnement'],['fin','etats','Intérêts, dette, trésorerie'],
+  ['etats','syn','États bouclés, KPI'],['esp','syn','Salles manquantes'],['eff','syn','Effectifs, occupation'],['fin','syn','Point bas de trésorerie']];
+const MODS=['eff','rev','aefe','emp','pay','sg','esp','capex','fin','etats','syn'];
+
+const io=id=>{const ins=FLOWS.filter(f=>f[1]===id),outs=FLOWS.filter(f=>f[0]===id);if(!ins.length&&!outs.length)return'';
+  return `<div class="io">${ins.length?`<div class="grp"><span class="lbl">Reçoit de</span>${ins.map(f=>`<button class="chip in" data-go="${f[0]}" title="${esc(f[2])}">${esc(TN[f[0]])}</button>`).join('')}</div>`:''}${outs.length?`<div class="grp"><span class="lbl">Alimente</span>${outs.map(f=>`<button class="chip out" data-go="${f[1]}" title="${esc(f[2])}">${esc(TN[f[1]])}</button>`).join('')}</div>`:''}</div>`};
+const fld=p=>{const d=DMAP[p],v=getP(ST,p);return `<label class="fld" for="f-${p.replace(/[^a-z0-9]/gi,'_')}"><span>${esc(d.l)}</span><span class="inp"><input type="number" id="f-${p.replace(/[^a-z0-9]/gi,'_')}" data-path="${p}" step="${d.step}" value="${v}"><em>${esc(d.u)}</em></span></label>`};
+const group=(title,paths,note)=>`<div class="fgroup"><h3>${title}</h3>${paths.map(fld).join('')}${note?`<p class="note">${note}</p>`:''}</div>`;
+const thead=(first='')=>`<thead><tr><th>${first}</th>${YEARS.map(y=>`<th>${y}</th>`).join('')}</tr></thead>`;
+const row=(label,vals,fmt=k0,cls='',cellCls)=>`<tr class="${cls}"><td>${label}</td>${vals.map((v,t)=>`<td class="${cellCls?cellCls(v,t):''}">${fmt(v)}</td>`).join('')}</tr>`;
+const table=(rows,first)=>`<div class="tw"><table>${thead(first)}<tbody>${rows.join('')}</tbody></table></div>`;
+const panel=(title,body)=>`<div class="panel">${title?`<h3>${title}</h3>`:''}${body}</div>`;
+const negc=v=>v<-0.5?'neg':'';
+const SCOL={central:'var(--s-central)',favorable:'var(--s-favorable)',stress:'var(--s-stress)'};
+const yearOpts=sel=>YEARS.map((y,i)=>`<option value="${i}" ${+sel===i?'selected':''}>${y}</option>`).join('');
+
+/* ---------- Calcul global ---------- */
+let R, RN, RS={};
+function recompute(){
+  R=compute(ST.scenario,true); RN=compute(ST.scenario,false);
+  SC_KEYS.forEach(k=>RS[k]=k===ST.scenario?R:compute(k,true));
+}
+const SIG={eff:R=>R.effTot,rev:R=>R.tuitionN,aefe:R=>R.pfc,emp:R=>R.teach.map((v,t)=>v+R.non[t]),pay:R=>R.payroll,sg:R=>R.sg,esp:R=>R.gapTot,capex:R=>R.capex.map((v,t)=>v+R.amort[t]),fin:R=>R.cash,etats:R=>R.result,syn:R=>R.cash};
+let lastSig={};
+function pulse(){
+  const changed=[];
+  Object.entries(SIG).forEach(([id,f])=>{const s=f(R).map(v=>Math.round(v)).join(',');if(lastSig[id]!==undefined&&lastSig[id]!==s&&id!==cur)changed.push(id);lastSig[id]=s});
+  changed.forEach(id=>{const b=document.querySelector(`.tab[data-tab="${id}"]`);if(b){b.classList.remove('pulse');void b.offsetWidth;b.classList.add('pulse')}});
+  document.getElementById('recalc').innerHTML=changed.length?`Recalculé à la suite de votre saisie : <span>${changed.map(id=>esc(TN[id])).join(' · ')}</span>`:'';
+}
+
+/* ---------- Alertes ---------- */
+function alerts(){
+  const a=[];
+  SCH.forEach(s=>{const t=R.gap.findIndex(o=>o[s]>0);if(t>=0){const mx=Math.max(...R.gap.map(o=>o[s]));a.push(['crit',`${SN[s]} : ${mx} salle${mx>1?'s':''} manquante${mx>1?'s':''} au plus fort, dès ${YEARS[t]}, malgré les projets prévus.`,'esp'])}});
+  const lost=sum(R.lost);if(ST.mode==='cap'&&lost>0.5)a.push(['warn',`${k0(lost)} années-élèves non accueillies faute de place sur 10 ans (demande ${k0(R.demTot.at(-1))} contre ${k0(R.effTot.at(-1))} accueillis en ${YEARS.at(-1)}).`,'eff']);
+  if(R.minCash<0)a.push(['crit',`Trésorerie négative en ${YEARS[R.minYear]} : ${m1(R.minCash)} AUD.`,'fin']);
+  else if(R.minMonths<ST.fin.minMonths)a.push(['warn',`Point bas de trésorerie à ${nf1.format(R.minMonths)} mois de charges en ${YEARS[R.minYear]}, sous le seuil de ${ST.fin.minMonths} mois.`,'fin']);
+  const neg=R.result.findIndex(v=>v<0);if(neg>=0)a.push(['warn',`Résultat déficitaire dès ${YEARS[neg]} (${m1(R.result[neg])} AUD).`,'etats']);
+  const ms=R.payroll.map((v,t)=>v/(R.tuitionN[t]+R.insc[t]+R.other[t])*100),hi=ms.findIndex(v=>v>70);if(hi>=0)a.push(['warn',`Masse salariale au-delà de 70 % des recettes en ${YEARS[hi]} (${pct(ms[hi])}).`,'pay']);
+  if(R.check.some(v=>Math.abs(v)>0.5))a.push(['crit','États financiers non bouclés : écart au bilan.','etats']);
+  if(!a.length)a.push(['ok','Aucune alerte : salles suffisantes, trésorerie au-dessus du seuil, états bouclés.','syn']);
+  return a;
+}
+
+/* ---------- Onglets ---------- */
+const V={};
+V.syn={stack:1,res(){
+  const L=Y-1, ms=R.payroll[L]/(R.tuitionN[L]+R.insc[L]+R.other[L])*100, gmax=Math.max(...R.gapTot), gy=R.gapTot.indexOf(gmax), dmax=Math.max(...R.debt);
+  const kp=(k,v,s,c='')=>`<div class="kpi ${c}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
+  const cashCls=R.minCash<0?'crit':R.minMonths<ST.fin.minMonths?'warn':'good';
+  const kpis=`<div class="kpis">
+    ${kp(`Élèves accueillis ${YEARS[L]}`,k0(R.effTot[L]),`${k0(R.effTot[0])} en ${YEARS[0]} · demande ${k0(R.demTot[L])}`)}
+    ${kp(`Occupation ${YEARS[L]}`,pct(R.effTot[L]/R.capTot[L]*100),`${k0(R.capTot[L])} places avec projets`)}
+    ${kp('Salles manquantes (max)',gmax?gmax:'0',gmax?`en ${YEARS[gy]}`:'capacité suffisante',gmax?'crit':'good')}
+    ${kp('Point bas de trésorerie',m1(R.minCash),`${YEARS[R.minYear]} · ${nf1.format(R.minMonths)} mois de charges`,cashCls)}
+    ${kp(`Trésorerie ${YEARS[L]}`,m1(R.cash[L]),`ouverture ${m1(ST.fin.cash0)} AUD`)}
+    ${kp('Dette maximale',m1(dmax),dmax?`en ${YEARS[R.debt.indexOf(dmax)]}`:'aucun emprunt')}
+    ${kp(`Masse salariale / recettes ${YS[L]}`,pct(ms),'hors subventions et produits financiers',ms>70?'warn':'')}
+    ${kp('Résultat cumulé 10 ans',m1(sum(R.result)),`${m1(R.result[0])} en ${YEARS[0]}`,sum(R.result)<0?'warn':'')}
+  </div>`;
+  const al=`<div class="alerts">${alerts().map(x=>`<div class="alert ${x[0]}"><span class="pill">${{crit:'Critique',warn:'Vigilance',ok:'OK',info:'Info'}[x[0]]}</span><span>${esc(x[1])} <button class="chip" data-go="${x[2]}">Ouvrir ${esc(TN[x[2]])}</button></span></div>`).join('')}</div>`;
+  const cost=sum(ST.projects.map(pcost));
+  const rowD=(l,a,b,fmt=m1,better=1)=>{const d=a-b;return `<tr><td>${l}</td><td>${fmt(a)}</td><td>${fmt(b)}</td><td class="${Math.abs(d)<0.5?'':(d*better>0?'pos':'neg')}">${d>0?'+':''}${fmt(d)}</td></tr>`};
+  const dec=`<div class="tw"><table class="decision"><thead><tr><th>Sur 10 ans, scénario ${esc(ST.scen[ST.scenario].label)}</th><th>Avec programme</th><th>Sans programme</th><th>Écart</th></tr></thead><tbody>
+    ${rowD('Coût du programme immobilier (k AUD)',cost,0,k0,-1)}
+    ${rowD('Années-élèves accueillies',sum(R.effTot),sum(RN.effTot),k0)}
+    ${rowD('Salles manquantes au plus fort',Math.max(...R.gapTot),Math.max(...RN.gapTot),k0,-1)}
+    ${rowD('Recettes cumulées (M AUD)',sum(R.prod),sum(RN.prod))}
+    ${rowD('Résultat cumulé (M AUD)',sum(R.result),sum(RN.result))}
+    ${rowD('Point bas de trésorerie (M AUD)',R.minCash,RN.minCash)}
+    ${rowD(`Trésorerie ${YEARS.at(-1)} (M AUD)`,R.cash.at(-1),RN.cash.at(-1))}
+    ${rowD(`Dette ${YEARS.at(-1)} (M AUD)`,R.debt.at(-1),RN.debt.at(-1),m1,-1)}
+  </tbody></table></div>${ST.mode==='dem'?'<p class="note">En jauge « demande non plafonnée », le programme n\'ajoute aucun élève : seuls ses coûts apparaissent. Passez en jauge plafonnée pour mesurer les recettes qu\'il permet.</p>':'<p class="note">Sans programme, les élèves en surnombre ne sont pas accueillis (jauge plafonnée) : l\'écart de recettes mesure ce que le programme rapporte.</p>'}`;
+  const thr=R.payroll.map((v,t)=>(v+R.sg[t]+R.pfc[t])/12*ST.fin.minMonths);
+  const cashC=chart({title:'Trésorerie de fin d\'année',fmt:v=>nf0.format(v/1000)+' M',series:[...SC_KEYS.map(k=>({name:`${ST.scen[k].label} (avec programme)`,vals:RS[k].cash,color:SCOL[k],w:k===ST.scenario?2.6:1.6})),{name:`${ST.scen[ST.scenario].label} sans programme`,vals:RN.cash,color:'var(--s-none)',dash:1,nodots:1},{name:`Seuil ${ST.fin.minMonths} mois de charges`,vals:thr,color:'var(--crit)',dash:1,nodots:1,w:1.2}]});
+  const effC=chart({title:'Élèves',series:[{name:'Capacité (salles × capacité)',vals:R.capTot,color:'var(--build)',step:1},{name:'Demande',vals:R.demTot,color:'var(--muted)',dash:1},{name:'Élèves accueillis',vals:R.effTot,color:'var(--accent)'},{name:'Accueillis sans programme',vals:RN.effTot,color:'var(--s-none)',dash:1,nodots:1}]});
+  return `${kpis}<div class="grid2">${panel('Trésorerie de fin d\'année, k AUD',cashC)}${panel('Élèves : demande, capacité, accueil',effC)}</div>
+  <div class="grid2">${panel('Alertes',al)}${panel('Décision immobilière : avec ou sans programme',dec)}</div>`;
+}};
+
+V.eff={inputs(){
+  const sc=`<div class="tw scen-t"><table><thead><tr><th></th>${SC_KEYS.map(k=>`<th>${esc(ST.scen[k].label)}</th>`).join('')}</tr></thead><tbody>${[['entry','Entrée en PS','él.'],['growth','Croissance entrée','%/an'],['dRet','Δ rétention','pts'],['dSec','Δ secondaire','pts']].map(([f,l,u])=>`<tr><td>${l} <span class="tag">${u}</span></td>${SC_KEYS.map(k=>`<td><input type="number" id="sc-${k}-${f}" data-path="scen.${k}.${f}" step="${DMAP[`scen.${k}.${f}`].step}" value="${ST.scen[k][f]}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const lv=`<div class="tw"><table><thead><tr><th>Niveau</th><th>École</th><th>Effectif ${YEARS[0]}</th><th>Rétention %</th></tr></thead><tbody>${LEVELS.map(L=>`<tr><td>${L[0]}</td><td>${SN[L[1]]}</td><td><input type="number" id="lv-${L[0]}-e" data-path="lv.${L[0]}.e0" value="${ST.lv[L[0]].e0}"></td><td>${L[3]==null?'<span class="tag">entrée</span>':`<input type="number" id="lv-${L[0]}-r" data-path="lv.${L[0]}.r" step="0.1" value="${ST.lv[L[0]].r}">`}</td></tr>`).join('')}</tbody></table></div>`;
+  return panel('Scénarios',sc+'<p class="note">Le scénario affiché se choisit en haut de page. Rétention = effectif du niveau ÷ effectif du niveau inférieur l\'année précédente.</p>')+'<div style="height:12px"></div>'+panel('Capacité par classe',SCH.map(s=>fld(`sch.${s}.cap`)).join('')+'<p class="note">Le nombre de salles par école se règle dans Besoins d\'espaces.</p>')+'<div style="height:12px"></div>'+panel('Effectifs réels et taux de rétention (3 ans)',lv);
+},res(){
+  const st=chart({title:'Élèves accueillis par école',stack:SCH.map(s=>({name:SN[s],vals:R.effS.map(o=>o[s]),color:`var(--sch-${s})`})),series:[{name:'Capacité',vals:R.capTot,color:'var(--build)',step:1},{name:'Demande',vals:R.demTot,color:'var(--ink)',dash:1,nodots:1}]});
+  const rows=[];
+  SCH.forEach(s=>{rows.push(`<tr class="hd"><td colspan="${Y+1}">${SN[s]}</td></tr>`);
+    rows.push(row('Demande',R.demS.map(o=>o[s]),k0,'sub'));rows.push(row('Élèves accueillis',R.effS.map(o=>o[s])));rows.push(row('Capacité',R.capS.map(o=>o[s]),k0,'sub'));
+    rows.push(row('Occupation',R.effS.map((o,t)=>o[s]/R.capS[t][s]*100),pct,'sub',v=>v>=100?'neg':''));rows.push(row('Non accueillis',R.demS.map((o,t)=>o[s]-R.effS[t][s]),k0,'sub',v=>v>0.5?'neg':''))});
+  rows.push(row('Total accueillis',R.effTot,k0,'tot'));rows.push(row('Nouveaux inscrits',R.newStu,k0,'sub'));
+  return panel(`Élèves accueillis par école · ${esc(ST.scen[ST.scenario].label)} · jauge ${ST.mode==='cap'?'plafonnée':'non plafonnée'}`,st)+panel('Détail par école',table(rows));
+}};
+
+V.rev={inputs(){return panel('',group('Grille tarifaire',SCH.map(s=>`sch.${s}.fee`))+group('Politique tarifaire',['rev.inc','rev.remise','rev.insc','rev.other'],'Nouveaux inscrits = apport extérieur calculé par la montée de cohorte.'))},
+res(){const tot=R.tuitionN.map((v,t)=>v+R.insc[t]+R.other[t]);
+  const c=chart({title:'Recettes',fmt:v=>nf0.format(v/1000)+' M',stack:[{name:'Droits nets',vals:R.tuitionN,color:'var(--accent)'},{name:'Inscriptions',vals:R.insc,color:'var(--s-favorable)'},{name:'Autres recettes',vals:R.other,color:'var(--build)'}],series:[{name:'Sans programme immobilier',vals:RN.tuitionN.map((v,t)=>v+RN.insc[t]+RN.other[t]),color:'var(--ink)',dash:1,nodots:1}]});
+  return panel('Recettes, k AUD',c)+panel('Détail, k AUD',table([row('Droits de scolarité bruts',R.tuitionG),row('Remises et fratries',R.remises.map(v=>-v),k0,'sub'),row('Droits nets',R.tuitionN),row('Frais de 1re inscription',R.insc),row('Autres recettes',R.other),row('Total recettes propres',tot,k0,'tot'),row('Recette moyenne par élève (AUD)',tot.map((v,t)=>v*1000/R.effTot[t]),k0,'sub')]));
+}};
+
+V.aefe={inputs(){return panel('',group('Participation AEFE',['aefe.pfc','aefe.abat'],'Assiette : droits de scolarité bruts (tarif × élèves accueillis).')+group('Aides',['aefe.subv','aefe.bourses'],'Les bourses de l\'État français changent le payeur, pas le montant : elles n\'ont pas d\'effet sur le compte de résultat.'))},
+res(){return panel('PFC et subventions, k AUD',table([row('Assiette (droits bruts)',R.tuitionG,k0,'sub'),row('PFC due à l\'AEFE',R.pfc),row('PFC en % des recettes propres',R.pfc.map((v,t)=>v/(R.tuitionN[t]+R.insc[t]+R.other[t])*100),pct,'sub'),row('Subventions d\'exploitation',R.subv),row('Bourses (changement de payeur, info)',R.subv.map((_,t)=>ST.aefe.bourses*Math.pow(1+ST.rev.inc/100,t)),k0,'sub')]))+panel('PFC par scénario, k AUD',chart({title:'PFC',series:SC_KEYS.map(k=>({name:ST.scen[k].label,vals:RS[k].pfc,color:SCOL[k]}))}))}};
+
+V.emp={inputs(){return panel('',group('Taux d\'encadrement',SCH.map(s=>`sch.${s}.teach`),'Classes = élèves accueillis ÷ capacité par classe, arrondi au supérieur. Le moteur détaillé de structure pédagogique (heures par discipline) remplacera ce ratio.')+group('Postes',['staff.res','staff.nonFix','staff.nonPer100']))},
+res(){const rows=[];SCH.forEach(s=>rows.push(row(`Classes — ${SN[s]}`,R.classes.map(o=>o[s]),k0,'sub')));rows.push(row('Total classes',R.classesTot,k0,'tot'));
+  rows.push(row('ETP enseignants',R.teach,nf1.format));rows.push(row('dont résidents',R.teach.map(()=>ST.staff.res),k0,'sub'));rows.push(row('ETP non enseignants',R.non,nf1.format));rows.push(row('Total ETP',R.teach.map((v,t)=>v+R.non[t]),nf1.format,'tot'));rows.push(row('Élèves par ETP enseignant',R.effTot.map((v,t)=>v/R.teach[t]),nf1.format,'sub'));
+  return panel('Carte des emplois agrégée',table(rows))+panel('ETP par scénario',chart({title:'ETP',fmt:k0,series:SC_KEYS.map(k=>({name:ST.scen[k].label,vals:RS[k].teach.map((v,t)=>v+RS[k].non[t]),color:SCOL[k]}))}));
+}};
+
+V.pay={inputs(){return panel('',group('Coûts employeur',['pay.local','pay.res','pay.adm','pay.gvt'],'Module isolé dans la version cible : seuls des agrégats en sortent.'))},
+res(){const rec=R.tuitionN.map((v,t)=>v+R.insc[t]+R.other[t]);
+  return panel('Masse salariale, k AUD',table([row('Enseignants locaux',R.payLocal),row('Résidents AEFE',R.payRes),row('Non enseignants',R.payAdm),row('Total masse salariale',R.payroll,k0,'tot'),row('En % des recettes propres',R.payroll.map((v,t)=>v/rec[t]*100),pct,'sub',v=>v>70?'neg':'')]))+
+  panel('Masse salariale en % des recettes propres',chart({title:'Ratio',fmt:v=>nf0.format(v)+' %',series:SC_KEYS.map(k=>({name:ST.scen[k].label,vals:RS[k].payroll.map((v,t)=>v/(RS[k].tuitionN[t]+RS[k].insc[t]+RS[k].other[t])*100),color:SCOL[k]})),ref:[{v:70,label:'Repère 70 %',color:'var(--warn)'}]}));
+}};
+
+V.sg={inputs(){return panel('',group('Contrats et charges',['sg.contracts','sg.varStu','sg.peda','sg.idx'])+group('Bâtiments',['sg.surface','sg.m2cost'],'Les m² des projets livrés (Besoins d\'espaces) s\'ajoutent à la surface entretenue.'))},
+res(){return panel('Charges de fonctionnement, k AUD',table([row('Contrats fixes',R.sgFix),row('Charges variables (élèves)',R.sgVar),row('Fonctionnement pédagogique',R.sgPeda),row('Entretien et énergie (m²)',R.sgM2),row('Total services généraux',R.sg,k0,'tot'),row('Surface entretenue (m²)',R.surface,k0,'sub')]))+
+  panel('Charges de fonctionnement, k AUD',chart({title:'Charges',stack:[{name:'Contrats fixes',vals:R.sgFix,color:'var(--s-none)'},{name:'Variables',vals:R.sgVar,color:'var(--accent)'},{name:'Pédagogique',vals:R.sgPeda,color:'var(--s-favorable)'},{name:'Entretien et énergie',vals:R.sgM2,color:'var(--build)'}]}))}};
+
+V.esp={stack:1,inputs(){
+  const opts=sel=>`<option value="" ${sel===''?'selected':''}>Hors salles de classe</option>`+SCH.map(s=>`<option value="${s}" ${sel===s?'selected':''}>${SN[s]}</option>`).join('');
+  const pr=ST.projects.map((p,i)=>`<tr><td><input type="text" id="p${i}-name" data-path="projects.${i}.name" data-type="str" value="${esc(p.name)}"></td>
+    <td><select id="p${i}-school" data-path="projects.${i}.school" data-type="str">${opts(p.school)}</select></td>
+    <td><input type="number" id="p${i}-rooms" data-path="projects.${i}.rooms" value="${p.rooms}"></td>
+    <td><input type="number" id="p${i}-m2" data-path="projects.${i}.m2" step="10" value="${p.m2}"></td>
+    <td><input type="number" id="p${i}-c" data-path="projects.${i}.costm2" step="100" value="${p.costm2}"></td>
+    <td class="pc" data-i="${i}">${k0(pcost(p))}</td>
+    <td><select id="p${i}-year" data-path="projects.${i}.year" data-type="num">${yearOpts(p.year)}</select></td>
+    <td><input type="number" id="p${i}-dur" data-path="projects.${i}.dur" min="1" max="5" value="${p.dur}"></td>
+    <td><input type="number" id="p${i}-am" data-path="projects.${i}.amort" value="${p.amort}"></td>
+    <td><input type="number" id="p${i}-loan" data-path="projects.${i}.loan" step="5" value="${p.loan}"></td>
+    <td><input type="number" id="p${i}-fund" data-path="projects.${i}.fund" step="5" value="${p.fund}"></td>
+    <td><button type="button" class="ghost" data-del="${i}" aria-label="Supprimer ${esc(p.name)}">Supprimer</button></td></tr>`).join('');
+  return `<div class="cols">${panel('Parc existant et normes',SCH.map(s=>fld(`sch.${s}.rooms`)).join('')+fld('space.m2room')+fld('space.costm2'))}
+  ${panel('Programme immobilier',`<div class="tw proj"><table><thead><tr><th>Projet</th><th>École</th><th>Salles</th><th>m²</th><th>AUD/m²</th><th>Coût k AUD</th><th>Livraison</th><th>Chantier (ans)</th><th>Amort. (ans)</th><th>% emprunt</th><th>% dons</th><th></th></tr></thead><tbody>${pr}</tbody></table></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="primary" id="addp">Ajouter un projet</button></div><div id="sugg"></div>
+  <p class="note">Les salles comptent à partir de l'année de livraison ; la dépense est répartie sur les années de chantier qui la précèdent. Le reste du financement (100 % − emprunt − dons) est pris sur la trésorerie.</p>`)}</div>`;
+},res(){
+  document.querySelectorAll('.pc').forEach(td=>td.textContent=k0(pcost(ST.projects[+td.dataset.i])));
+  const sg=document.getElementById('sugg');
+  if(sg){const items=SCH.map(s=>{const t=R.gap.findIndex(o=>o[s]>0);if(t<0)return'';const mx=Math.max(...R.gap.map(o=>o[s]));return `<div><span><b>${SN[s]}</b> : il manque ${mx} salle${mx>1?'s':''} au plus fort, dès ${YEARS[t]}.</span><button type="button" data-sugg="${s}|${mx}|${Math.max(1,t)}">Ajouter un projet de ${mx} salle${mx>1?'s':''} livré en ${YEARS[Math.max(1,t)]}</button></div>`}).join('');sg.innerHTML=items?`<div class="sugg">${items}</div>`:'<p class="note" style="color:var(--good)">Les salles disponibles couvrent la demande sur tout l\'horizon dans ce scénario.</p>'}
+  const minis=SCH.map(s=>`<div class="panel mini"><h4>${SN[s]}</h4>${chart({h:200,title:SN[s],fmt:k0,nt:4,bars:[{name:'Salles nécessaires (demande)',vals:R.need.map(o=>o[s]),color:`var(--sch-${s})`}],series:[{name:'Salles disponibles',vals:R.rooms.map(o=>o[s]),color:'var(--build)',step:1,w:2.4}]})}</div>`).join('');
+  const rows=[];SCH.forEach(s=>{rows.push(`<tr class="hd"><td colspan="${Y+1}">${SN[s]}</td></tr>`);rows.push(row('Demande d\'élèves',R.demS.map(o=>o[s]),k0,'sub'));rows.push(row('Salles nécessaires',R.need.map(o=>o[s])));rows.push(row('Salles disponibles',R.rooms.map(o=>o[s])));rows.push(row('Écart (− = manque)',R.gap.map(o=>-o[s]),v=>(v>0?'+':'')+k0(v),'',v=>v<0?'gap-bad':'gap-ok'))});
+  rows.push(row('Total salles manquantes',R.gapTot,k0,'tot',v=>v>0?'gap-bad':''));
+  return `<div class="grid4">${minis}</div>${panel(`Besoin en salles · ${esc(ST.scen[ST.scenario].label)}`,table(rows))}`;
+}};
+
+V.capex={inputs(){return panel('',group('Renouvellement',['capex.renew','capex.renewLife'])+group('Parc existant',['capex.existNet','capex.existDot'],'Les projets immobiliers se saisissent dans Besoins d\'espaces.'))},
+res(){const pr=R.projs.map(p=>row(esc(p.name),range(Y).map(t=>p.ys.filter(y=>y===t).length*p.share),v=>v?k0(v):'·','sub'));
+  return panel('Investissements, k AUD',chart({title:'CAPEX',stack:[{name:'Programme immobilier',vals:R.capexP,color:'var(--build)'},{name:'Renouvellement',vals:R.renew,color:'var(--s-none)'}],series:[{name:'Dotations aux amortissements',vals:R.amort,color:'var(--accent)'}]}))+
+  panel('Détail, k AUD',table([...pr,row('Programme immobilier',R.capexP),row('Renouvellement',R.renew),row('Total CAPEX',R.capex,k0,'tot'),row('Amortissements — projets',R.amortP,k0,'sub'),row('Amortissements — renouvellement',R.amortR,k0,'sub'),row('Amortissements — existant',R.amortE,k0,'sub'),row('Total amortissements',R.amort,k0,'tot'),row('Immobilisations nettes',R.immos)]));
+}};
+
+V.fin={inputs(){return panel('',group('Trésorerie',['fin.cash0','fin.minMonths','fin.depRate','fin.odRate'])+group('Emprunts',['fin.rate','fin.loanYears'],'Chaque tirage est remboursé par annuités constantes à partir de l\'année suivante.')+group('Fundraising & fonds affectés',['fin.fundAnnual'],'Les dons liés aux projets se règlent en % du coût dans Besoins d\'espaces ; ils sont inscrits en fonds affectés.'))},
+res(){
+  const thr=R.payroll.map((v,t)=>(v+R.sg[t]+R.pfc[t])/12*ST.fin.minMonths);
+  return panel('Trésorerie et dette, k AUD',chart({title:'Trésorerie',fmt:v=>nf0.format(v/1000)+' M',series:[{name:'Trésorerie avec programme',vals:R.cash,color:'var(--accent)',w:2.6},{name:'Trésorerie sans programme',vals:RN.cash,color:'var(--s-none)',dash:1,nodots:1},{name:'Dette',vals:R.debt,color:'var(--build)'},{name:`Seuil ${ST.fin.minMonths} mois`,vals:thr,color:'var(--crit)',dash:1,nodots:1,w:1.2}]}))+
+  panel('Tableau de trésorerie, k AUD',table([row('Trésorerie d\'ouverture',R.cashOpen,k0,'sub'),row('Capacité d\'autofinancement',R.caf),row('Investissements',R.capex.map(v=>-v),k0,'',negc),row('Emprunts tirés',R.draws),row('Remboursements en capital',R.principal.map(v=>-v),k0,'',negc),row('Dons et fonds affectés',R.fund),row('Trésorerie de clôture',R.cash,k0,'tot',negc),row('En mois de charges',R.months,nf1.format,'sub',v=>v<ST.fin.minMonths?'neg':''),row('Dette en fin d\'année',R.debt,k0,'sub'),row('Intérêts payés',R.interest,k0,'sub')]));
+}};
+
+V.etats={stack:1,res(){
+  const pl=[row('Droits de scolarité nets',R.tuitionN),row('Frais d\'inscription',R.insc),row('Autres recettes',R.other),row('Subventions d\'exploitation',R.subv),row('Produits financiers',R.finInc),row('Total produits',R.prod,k0,'tot'),
+    row('Masse salariale',R.payroll.map(v=>-v)),row('Services généraux',R.sg.map(v=>-v)),row('PFC AEFE',R.pfc.map(v=>-v)),row('Dotations aux amortissements',R.amort.map(v=>-v)),row('Charges financières',R.interest.map((v,t)=>-(v+R.od[t]))),row('Résultat net',R.result,k0,'tot',negc)];
+  const bs=[`<tr class="hd"><td colspan="${Y+1}">Actif</td></tr>`,row('Immobilisations nettes',R.immos),row('Trésorerie',R.cash,k0,'',negc),row('Total actif',R.immos.map((v,t)=>v+R.cash[t]),k0,'tot'),
+    `<tr class="hd"><td colspan="${Y+1}">Passif</td></tr>`,row('Fonds propres (dont résultat)',R.equity),row('Fonds affectés',R.fa),row('Emprunts',R.debt),row('Total passif',R.equity.map((v,t)=>v+R.fa[t]+R.debt[t]),k0,'tot'),row('Contrôle actif − passif',R.check,v=>Math.abs(v)<0.5?'0 ✓':k0(v),'sub')];
+  const cf=[row('Résultat net',R.result,k0,'',negc),row('+ Amortissements',R.amort),row('Flux d\'exploitation',R.caf,k0,'tot'),row('Flux d\'investissement',R.capex.map(v=>-v),k0,'tot',negc),row('Emprunts − remboursements',R.draws.map((v,t)=>v-R.principal[t])),row('Dons affectés',R.fund),row('Flux de financement',R.draws.map((v,t)=>v-R.principal[t]+R.fund[t]),k0,'tot'),row('Variation de trésorerie',R.cash.map((v,t)=>v-R.cashOpen[t]),k0,'tot',negc)];
+  return `<p class="lead">Les trois états sont recalculés à chaque saisie et bouclés : la trésorerie du tableau des flux est celle du bilan, et le contrôle actif − passif doit rester à zéro. Hypothèse simplificatrice : besoin en fonds de roulement constant.</p>`+panel(`Compte de résultat, k AUD · ${esc(ST.scen[ST.scenario].label)}`,table(pl))+panel('Bilan simplifié, k AUD',table(bs))+panel('Tableau des flux de trésorerie, k AUD',table(cf));
+}};
+
+V.reg={stack:1,inputs(){
+  const mods=['eff','rev','aefe','emp','pay','sg','esp','capex','fin'];
+  return `<p class="lead">Toutes les hypothèses au même endroit. Une valeur modifiée ici l'est aussi dans son onglet, et inversement.</p>`+mods.map(m=>panel(`${esc(TN[m])} <button class="chip" data-go="${m}">Ouvrir</button>`,`<div class="tw"><table><thead><tr><th>Driver</th><th>Valeur</th><th>Unité</th></tr></thead><tbody>${DRV.filter(d=>d.m===m).map(d=>`<tr><td>${esc(d.l)}</td><td><input type="number" id="r-${d.p.replace(/[^a-z0-9]/gi,'_')}" data-path="${d.p}" step="${d.step}" value="${getP(ST,d.p)}"></td><td style="text-align:left;color:var(--muted)">${esc(d.u)}</td></tr>`).join('')}</tbody></table></div>`)).join('<div style="height:12px"></div>');
+}};
+
+V.flux={stack:1,res(){
+  const m=MODS;
+  const cell=(a,b)=>{const f=FLOWS.find(x=>x[0]===a&&x[1]===b);if(!f)return '<td></td>';const loop=FLOWS.some(x=>x[0]===b&&x[1]===a);return `<td class="f ${loop?'loop':''}">${esc(f[2])}</td>`};
+  return `<p class="lead">Lire en ligne : le module de gauche alimente le module en colonne. Les cases ocre forment la boucle capacitaire : la demande d'élèves fixe le besoin en salles, et les salles livrées fixent en retour le nombre d'élèves accueillis (jauge plafonnée).</p>`+panel('Matrice des flux',`<div class="tw"><table class="matrix"><thead><tr><th>De ↓ / vers →</th>${m.map(b=>`<th><button class="chip" data-go="${b}">${esc(TN[b])}</button></th>`).join('')}</tr></thead><tbody>${m.map(a=>`<tr><th><button class="chip" data-go="${a}">${esc(TN[a])}</button></th>${m.map(b=>a===b?'<td style="background:var(--surface-2)"></td>':cell(a,b)).join('')}</tr>`).join('')}</tbody></table></div>`)+
+  panel('Chaîne de l\'immobilier jusqu\'à la trésorerie',`<ol style="margin:0;padding-left:18px;display:grid;gap:4px"><li>Effectifs & capacité projette la demande d'élèves par école et par scénario.</li><li>Besoins d'espaces la convertit en salles nécessaires et la compare aux salles existantes et livrées.</li><li>Les projets ajoutent des salles (capacité) et des m² (entretien, énergie dans Services généraux).</li><li>CAPEX étale les décaissements et calcule les amortissements.</li><li>Financement & trésorerie tire les emprunts, encaisse les dons, rembourse les annuités.</li><li>En jauge plafonnée, la capacité ajoutée permet d'accueillir plus d'élèves : recettes, PFC, classes, ETP et masse salariale suivent.</li><li>États financiers boucle le tout ; la Synthèse compare avec et sans programme.</li></ol>`);
+}};
+
+/* ---------- Rendu ---------- */
+let cur='syn'; try{const h=location.hash.slice(1);if(V[h])cur=h}catch(e){}
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(t=>`<button type="button" class="tab ${t.id===cur?'on':''} ${t.sep?'sep':''}" data-tab="${t.id}" aria-current="${t.id===cur?'page':'false'}"><small>${esc(t.code)}</small><b>${esc(t.name)}</b><span class="dot"></span></button>`).join('')}
+function render(){
+  const v=V[cur], t=TABS.find(x=>x.id===cur);
+  const lead={syn:'Vue d\'ensemble du scénario choisi : élèves, salles, trésorerie, et comparaison avec ou sans programme immobilier.',eff:'Montée de cohorte par niveau à partir des taux de rétention, confrontée à la capacité des salles.',rev:'Recettes = élèves accueillis × tarif, moins les remises, plus les frais d\'inscription des nouveaux élèves.',aefe:'Participation forfaitaire complémentaire due à l\'AEFE et aides reçues.',emp:'Classes ouvertes et ETP nécessaires, déduits des élèves accueillis.',pay:'Coût des ETP, revalorisé chaque année.',sg:'Contrats, charges liées aux élèves et entretien des surfaces, y compris les bâtiments livrés.',esp:'Salles nécessaires selon la demande projetée, programme immobilier pour combler l\'écart.',capex:'Décaissements des projets, renouvellement et amortissements.',fin:'Plan de trésorerie annuel, emprunts et dons.',etats:'',reg:'',flux:''}[cur];
+  document.getElementById('view').innerHTML=`<h2>${esc(t.name)}</h2>${lead?`<p class="lead">${lead}</p>`:''}${io(cur)}<div class="cols ${v.stack||!v.inputs||!v.res?'stack':''}">${v.inputs?`<aside>${v.inputs()}</aside>`:''}${v.res?`<section class="res" id="res"></section>`:''}</div>`;
+  update();
+}
+function update(){const v=V[cur];if(v.res){const el=document.getElementById('res');if(el)el.innerHTML=v.res()}}
+function go(id){cur=id;renderTabs();render();window.scrollTo({top:0});try{history.replaceState(null,'','#'+id)}catch(e){}}
+function syncHeader(){const s=document.getElementById('g-scen');s.innerHTML=SC_KEYS.map(k=>`<option value="${k}" ${ST.scenario===k?'selected':''}>${esc(ST.scen[k].label)}</option>`).join('');document.getElementById('g-mode').value=ST.mode}
+
+function onEdit(e){
+  const el=e.target, p=el.dataset&&el.dataset.path; if(!p)return;
+  if(el.dataset.type==='str') setP(ST,p,el.value);
+  else{ if(el.value===''||isNaN(+el.value))return; setP(ST,p,+el.value); }
+  recompute(); save(); update(); pulse();
+}
+document.addEventListener('input',e=>{if(e.target.tagName!=='SELECT')onEdit(e)});
+document.addEventListener('change',e=>{if(e.target.tagName==='SELECT')onEdit(e)});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  if(b.dataset.tab) return go(b.dataset.tab);
+  if(b.dataset.go) return go(b.dataset.go);
+  if(b.dataset.del!==undefined){ST.projects.splice(+b.dataset.del,1);recompute();save();render();pulse();return}
+  if(b.id==='addp'){ST.projects.push({name:`Projet ${ST.projects.length+1}`,school:'Elem',rooms:2,m2:2*ST.space.m2room,costm2:ST.space.costm2,year:3,dur:2,amort:30,loan:50,fund:0});recompute();save();render();pulse();return}
+  if(b.dataset.sugg){const [s,n,y]=b.dataset.sugg.split('|');ST.projects.push({name:`Extension ${SN[s].toLowerCase()} (${n} salles)`,school:s,rooms:+n,m2:+n*ST.space.m2room,costm2:ST.space.costm2,year:+y,dur:Math.min(2,+y),amort:30,loan:50,fund:0});recompute();save();render();pulse();return}
+  if(b.id==='reset'){ST=clone(DEFAULT);save();syncHeader();recompute();lastSig={};pulse();render();return}
+});
+
+syncHeader(); recompute(); pulse(); renderTabs(); render();
+})();
+</script>
+
+</body></html>
