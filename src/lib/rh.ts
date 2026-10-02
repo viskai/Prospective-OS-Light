@@ -1,9 +1,11 @@
 // B3 — RH & masse salariale (module isolé : accès DAF, direction RH et Payroll).
 // Seul module qui manipule des postes individuels. Aucun nom, aucune donnée d'état civil : un poste a une référence opaque.
 // Il ne publie que des agrégats (par catégorie et centre de coût, jamais sous 3 postes) et des postes en place par discipline.
-// Montants saisis en devise (unités), sorties en k AUD.
+// Montants en monnaie de pilotage (src/lib/monnaie.ts). Un salaire ou une contribution libellé en devise locale est converti
+// avec le taux de change du driver ; les sorties sont en milliers de la monnaie de base.
+import { versBase, tauxManquants, type Monnaies, MONNAIES_DEFAUT } from "./monnaie.ts";
 
-export type Devise = "AUD" | "MYR" | "EUR";
+export type Devise = string;                  // code ISO ; la monnaie de base est celle de `PolitiqueSalariale.monnaies`
 export type Statut = "resident" | "tnr" | "contractuel" | "vacataire" | "pe" | "local";
 export type Service = "primaire" | "secondaire" | "administration" | "periscolaire";
 export type Categorie = "enseignant" | "non_enseignant";
@@ -18,12 +20,12 @@ export interface PosteRH {
   quotite: number;                    // 1 = temps plein
   ors?: number;                       // obligation de service hebdomadaire à temps plein (enseignants)
   hsa?: number;                       // heures supplémentaires hebdomadaires
-  devise: Devise;
-  salaireBase: number;                // annuel, temps plein, en devise
-  primes?: number;                    // annuel, en devise
+  devise: Devise;                     // devise des montants ci-dessous (en général la monnaie de base)
+  salaireBase: number;                // annuel, temps plein, en `devise`
+  primes?: number;                    // annuel, en `devise`
   chargesPct?: number;                // charges employeur, % du salaire
-  avantages?: number;                 // annuel, en devise
-  contributionResident?: number;      // résident AEFE : coût annuel pour l'établissement (remplace le salaire)
+  avantages?: number;                 // annuel, en `devise`
+  contributionResident?: number;      // résident AEFE : coût annuel pour l'établissement (remplace le salaire), en `devise`
   anneeDebut?: number;                // index d'année de projection (0 = année de départ)
   anneeFin?: number;                  // dernière année incluse
 }
@@ -31,15 +33,13 @@ export interface PosteRH {
 export interface PolitiqueSalariale {
   revalorisation: number;             // % par an (indexation des grilles)
   gvt: number;                        // % par an (glissement des carrières) ; hors résidents
-  tauxHSA: number;                    // AUD par an et par heure hebdomadaire d'HSA
-  change: Record<Devise, number>;     // unités de devise pour 1 AUD
-  deriveChange?: Partial<Record<Devise, number>>; // % par an de hausse du nombre d'unités par AUD
+  tauxHSA: number;                    // monnaie de base, par an et par heure hebdomadaire d'HSA (0 = non renseigné)
+  monnaies: Monnaies;                 // monnaie de base et taux de change
   minGroupe: number;                  // seuil de confidentialité (3)
 }
 
-export const POLITIQUE_DEFAUT: PolitiqueSalariale = {
-  revalorisation: 3, gvt: 1, tauxHSA: 3000, change: { AUD: 1, MYR: 3.0, EUR: 0.6 }, minGroupe: 3,
-};
+/** Aucun montant par défaut : taux d'HSA et taux de change sont des paramètres à renseigner. */
+export const POLITIQUE_DEFAUT: PolitiqueSalariale = { revalorisation: 3, gvt: 1, tauxHSA: 0, monnaies: MONNAIES_DEFAUT, minGroupe: 3 };
 
 /** IMP et décharges en montant forfaitaire : pas de conversion en heures. */
 export interface Forfait {
@@ -48,7 +48,7 @@ export interface Forfait {
   type: "imp" | "decharge" | "prime" | "autre";
   centre?: string;
   unites: number;                     // nombre d'IMP, de décharges…
-  montantUnitaire: number;            // AUD par unité et par an
+  montantUnitaire: number;            // monnaie de base, par unité et par an
   indexe?: boolean;                   // suit la revalorisation (défaut : oui)
 }
 
@@ -56,22 +56,22 @@ export interface PosteCree {          // créations issues de B2 (temps pleins l
   centre: string;
   etp: number;
   annee: number;                      // première année de coût
-  coutUnitaire: number;               // AUD par ETP et par an, charges comprises, valeur de l'année de départ
+  coutUnitaire: number;               // monnaie de base, par ETP et par an, charges comprises, valeur de l'année de départ
 }
 
 const facteur = (pct: number, t: number) => Math.pow(1 + pct / 100, t);
 
-/** Coût annuel d'un poste pour l'établissement, en k AUD, à l'année t de projection ; 0 hors de sa période. */
+/** Coût annuel d'un poste pour l'établissement, en milliers de monnaie de base, à l'année t de projection ; 0 hors de sa période. */
 export function coutPoste(p: PosteRH, t: number, pol: PolitiqueSalariale): number {
   if (t < (p.anneeDebut ?? 0) || (p.anneeFin != null && t > p.anneeFin)) return 0;
   const charges = 1 + (p.chargesPct ?? 0) / 100;
   let base: number;
   if (p.statut === "resident") base = (p.contributionResident ?? 0) * p.quotite;
   else base = ((p.salaireBase * p.quotite + (p.primes ?? 0)) * charges + (p.avantages ?? 0));
-  const hsa = (p.hsa ?? 0) * pol.tauxHSA / pol.change.AUD;       // taux HSA exprimé en AUD
   const revalo = facteur(pol.revalorisation, t) * (p.statut === "resident" ? 1 : facteur(pol.gvt, t));
-  const local = (base * revalo) / (pol.change[p.devise] * facteur(pol.deriveChange?.[p.devise] ?? 0, t));
-  return (local + hsa * facteur(pol.revalorisation, t)) / 1000;
+  const enBase = versBase(pol.monnaies, base * revalo, p.devise, t);
+  const hsa = (p.hsa ?? 0) * pol.tauxHSA * facteur(pol.revalorisation, t);     // heures × taux, déjà en monnaie de base
+  return (enBase + hsa) / 1000;
 }
 
 export interface LigneMasse {
@@ -79,7 +79,7 @@ export interface LigneMasse {
   centre: string;
   effectif: number;                   // nombre de postes de la ligne (≥ seuil de confidentialité, hors forfaits et créations)
   regroupe: boolean;
-  parAnnee: number[];                 // k AUD
+  parAnnee: number[];                 // milliers de monnaie de base
 }
 
 export interface MasseSalariale {
@@ -167,9 +167,10 @@ export function controlerPostes(postes: PosteRH[], pol: PolitiqueSalariale = POL
     if (p.categorie === "enseignant" && !p.ors && p.statut !== "pe") erreurs.push(`${p.ref} : ORS manquante`);
     if (p.statut === "resident" && p.contributionResident == null) erreurs.push(`${p.ref} : contribution du résident manquante`);
     if (p.statut !== "resident" && !(p.salaireBase > 0)) erreurs.push(`${p.ref} : salaire de base manquant`);
-    if (!(p.devise in pol.change)) erreurs.push(`${p.ref} : devise sans taux de change (${p.devise})`);
+    if (p.hsa && !(pol.tauxHSA > 0)) erreurs.push(`${p.ref} : HSA saisies mais taux d'HSA non renseigné`);
     if (p.statut === "pe" && p.categorie !== "enseignant") erreurs.push(`${p.ref} : statut PE réservé aux enseignants`);
   }
+  for (const d of tauxManquants(pol.monnaies, postes.map((p) => p.devise))) erreurs.push(`Taux de change manquant pour ${d} (monnaie de base : ${pol.monnaies.base})`);
   return erreurs;
 }
 

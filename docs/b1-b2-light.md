@@ -28,7 +28,7 @@ Code : `src/lib/referentiel.ts`, `src/lib/structure.ts` (B1), `src/lib/emplois.t
 | Planning des groupes / fiches de structure (écrans) | non repris : l'OS Light ne publie que des besoins agrégés |
 
 ## Conservés à la demande : IB, BFI, langue du pays hôte
-- **IB Diploma** : niveaux `ib1` et `ib2` (effectifs saisis, distincts de 1ère et terminale générales : A1 doit les en retrancher). TOK 1,5 h en classe, 6 matières par élève (3 HL à 4 h, 3 SL à 3 h), groupes plafonnés à 20, contrôle « 6 matières par élève ». Parts par matière = placeholders uniformes.
+- **IB Diploma** : niveaux `ib1` et `ib2`, distincts de la 1ère et de la terminale générales ; leurs effectifs sont calculés par A1 (`separerIB`, voir `docs/ib.md`). TOK 1,5 h en classe, 6 matières par élève (3 HL à 4 h, 3 SL à 3 h), groupes plafonnés à 20, contrôle « 6 matières par élève ». Parts par matière = placeholders uniformes.
 - **BFI** (1ère et terminale) : connaissance du monde 2 h, approfondissement culturel et linguistique 2 h, DNL en langue 2 h (histoire-géographie par défaut, co-intervention optionnelle). Effectif du dispositif saisi (`NiveauIn.bfi`).
 - **Langue du pays hôte (malais)**, hors grille, discipline `LVH` assurée par un spécialiste : 2 h par division en élémentaire et au collège, 1 h au lycée sur activation. Volumes à confirmer.
 - **IMP et décharges** : montants forfaitaires (pas d'heures), portés par B3 (`src/lib/rh.ts`).

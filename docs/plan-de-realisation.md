@@ -23,6 +23,12 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 - [x] B3 RH & masse salariale (isolé), IMP et décharges forfaitaires (`src/lib/rh.ts`, `docs/b3-rh-light.md`, migration 0003) — reste : import du fichier RH, droits d'accès dans le Worker, publication au registre des drivers
 - [x] IB, BFI et langue du pays hôte (malais) dans le référentiel
 - [ ] Liste des postes par discipline (à fournir)
+- [ ] Monnaie de pilotage de LFKL et taux de change (à fournir)
+
+## Lot 3 (démarré)
+- [x] Monnaie unique de pilotage, modifiable, sans devise en dur (`docs/monnaie.md`) ; HSA en heures, seul leur taux est un montant
+- [x] IB : effectifs à part, retranchés de la 1ère et de la terminale, tarification et coûts différenciés (`docs/ib.md`)
+- [x] C1 contrats et charges, D1 besoins d'espaces, D2 CAPEX pluriannuel (`docs/c1-d1-d2.md`) — reste : D3 financement et trésorerie, P4 fundraising
 
 ## Décisions (1er octobre 2026)
 - **Établissement pilote : LFKL.**

@@ -5,7 +5,7 @@ effectifs → structure → emplois → masse salariale → états financiers bo
 
 - **Spécifications :** [`docs/cahier-des-charges.md`](docs/cahier-des-charges.md) (issu du doc « Cahier des charges — School Strategic OS Light »)
 - **Plan et lots :** [`docs/plan-de-realisation.md`](docs/plan-de-realisation.md)
-- **Prototype d'ergonomie :** [`prototype/os-light-prototype.html`](prototype/os-light-prototype.html) — page autonome, valeurs fictives (k AUD), à ouvrir dans un navigateur
+- **Prototype d'ergonomie :** [`prototype/os-light-prototype.html`](prototype/os-light-prototype.html) — page autonome, valeurs fictives (milliers dans une monnaie d'exemple), à ouvrir dans un navigateur
 - **Pile :** Cloudflare Workers + D1 + Cloudflare Access (code à usage unique) ; n8n uniquement pour invitations/notifications
 
 ## Démarrage

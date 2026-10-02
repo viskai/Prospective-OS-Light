@@ -21,8 +21,8 @@ Module **isolé** : accès DAF, direction RH et Payroll (§5 et §8 du cahier de
 ## Coût d'un poste
 - Non résident : (salaire de base × quotité + primes) × (1 + charges) + avantages.
 - Résident AEFE : **contribution** annuelle de l'établissement × quotité (remplace le salaire, pas de GVT).
-- HSA : heures hebdomadaires × taux annuel par HSA.
-- Projection sur 15 ans : revalorisation annuelle, GVT, dérive éventuelle du change ; devises AUD / MYR / EUR (taux = unités de devise pour 1 AUD, piloté par driver).
+- HSA : **heures** hebdomadaires saisies par poste × taux annuel d'une heure d'HSA, ce taux étant le seul montant (dans la monnaie de pilotage).
+- Projection sur 15 ans : revalorisation annuelle, GVT, dérive éventuelle du change ; toutes les sorties dans la monnaie de pilotage (`docs/monnaie.md`) ; un salaire libellé en devise locale est converti avec le taux de change du driver.
 
 ## IMP et décharges
 Montants **forfaitaires** (nombre d'unités × montant annuel), indexables, sans conversion en heures ni effet sur le besoin en ETP de B1/B2.

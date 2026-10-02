@@ -96,3 +96,43 @@ export function niveauPasse(codes: readonly string[], courant: string, ecartAnne
   const i = codes.indexOf(courant);
   return i - ecartAnnees >= 0 ? codes[i - ecartAnnees] : null; // null = pas encore scolarisé
 }
+
+/* ------------------------------ IB : effectifs à part ------------------------------ */
+
+export interface ParamsIB {
+  anneeOuverture: number;                    // index d'année de la 1re rentrée IB1 ; au-delà de l'horizon, l'IB n'existe pas
+  partPremiere: number | number[];           // % des élèves de 1ère qui entrent en IB : constant, ou série depuis l'année d'ouverture
+  retention: number;                         // % d'IB1 qui passent en IB2 l'année suivante
+  codePremiere: string;                      // code du niveau « 1ère » dans la liste des niveaux
+  codeTerminale: string;                     // code du niveau « terminale »
+}
+
+export interface SplitIB {
+  ib1: number[]; ib2: number[]; ib: number[];
+  premiereGenerale: number[]; terminaleGenerale: number[];
+  alertes: string[];
+}
+
+/**
+ * Retranche l'IB des effectifs de 1ère et de terminale. IB1 = part des élèves de 1ère ; IB2 = IB1 de l'année précédente
+ * × rétention, plafonné à l'effectif de terminale. Total du lycée inchangé : seule la répartition voie générale / IB bouge.
+ */
+export function separerIB(res: Resultat, niveaux: Niveau[], p: ParamsIB): SplitIB {
+  const iP = niveaux.findIndex((n) => n.code === p.codePremiere), iT = niveaux.findIndex((n) => n.code === p.codeTerminale);
+  if (iP < 0 || iT < 0) throw new Error(`Niveaux introuvables : ${p.codePremiere} / ${p.codeTerminale}`);
+  const H = res.effectifs.length;
+  const ib1: number[] = [], ib2: number[] = [], alertes: string[] = [];
+  const part = (t: number) => (Array.isArray(p.partPremiere) ? p.partPremiere[t - p.anneeOuverture] ?? p.partPremiere[p.partPremiere.length - 1] ?? 0 : p.partPremiere);
+  for (let t = 0; t < H; t++) {
+    ib1[t] = t >= p.anneeOuverture ? Math.min(res.effectifs[t][iP], (res.effectifs[t][iP] * Math.max(0, part(t))) / 100) : 0;
+    const voulu = t > 0 ? (ib1[t - 1] * p.retention) / 100 : 0;
+    ib2[t] = Math.min(voulu, res.effectifs[t][iT]);
+    if (voulu > res.effectifs[t][iT] + 1e-9) alertes.push(`Année ${t} : IB2 (${voulu.toFixed(1)}) plafonné à l'effectif de terminale (${res.effectifs[t][iT].toFixed(1)})`);
+  }
+  return {
+    ib1, ib2, ib: ib1.map((v, t) => v + ib2[t]),
+    premiereGenerale: ib1.map((v, t) => res.effectifs[t][iP] - v),
+    terminaleGenerale: ib2.map((v, t) => res.effectifs[t][iT] - v),
+    alertes,
+  };
+}

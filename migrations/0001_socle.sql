@@ -5,7 +5,7 @@ CREATE TABLE etablissement (
   id INTEGER PRIMARY KEY,
   code TEXT NOT NULL UNIQUE,            -- LCS, LFKL
   nom TEXT NOT NULL,
-  devise_base TEXT NOT NULL DEFAULT 'AUD',
+  monnaie_base TEXT NOT NULL,           -- monnaie de pilotage unique (modifiable, voir monnaie_taux) ; aucune valeur par défaut
   parametres TEXT NOT NULL DEFAULT '{}' -- plan comptable, calendrier, grilles, statuts
 );
 
@@ -76,4 +76,13 @@ CREATE TABLE journal (
   etat_precedent TEXT,
   utilisateur_id INTEGER REFERENCES utilisateur(id),
   date_modif TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Taux de change : unités de la devise pour 1 unité de la monnaie de base (la base a le taux 1).
+CREATE TABLE monnaie_taux (
+  etablissement_id INTEGER NOT NULL REFERENCES etablissement(id),
+  code TEXT NOT NULL,
+  taux REAL NOT NULL CHECK (taux > 0),
+  derive_pct REAL NOT NULL DEFAULT 0,   -- hausse annuelle du nombre d'unités de la devise pour 1 unité de base
+  PRIMARY KEY (etablissement_id, code)
 );

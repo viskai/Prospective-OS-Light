@@ -41,3 +41,15 @@ test("registre : codes uniques", () => {
   const codes = registreInitial().map((d) => d.code);
   assert.equal(new Set(codes).size, codes.length);
 });
+
+test("registre : unités monétaires avec jeton {M}, re-basage et change", async () => {
+  const { registreInitial, rebaserDrivers, uniteDriver, driverChange } = await import("../src/lib/drivers.ts");
+  const defs = registreInitial();
+  assert.ok(defs.every((x) => !/AUD|MYR|EUR/.test(x.unite)), "aucune devise écrite en dur");
+  const hsa = defs.find((x) => x.code === "pay.tauxHSA")!;
+  assert.equal(hsa.monetaire, true);
+  assert.equal(uniteDriver(hsa, { base: "EUR", taux: { EUR: 1 } }), "EUR/an");
+  const r = rebaserDrivers({ "pay.tauxHSA": 3000, "pay.gvt": 1, "rev.tarif.IB": [1, 2] }, defs, 2);
+  assert.equal(r["pay.tauxHSA"], 6000); assert.equal(r["pay.gvt"], 1); assert.deepEqual(r["rev.tarif.IB"], [2, 4]);
+  assert.equal(driverChange("MYR", "EUR").unite, "MYR/EUR");
+});

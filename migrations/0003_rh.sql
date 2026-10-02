@@ -13,7 +13,7 @@ CREATE TABLE rh_poste (
   quotite REAL NOT NULL,
   ors REAL,
   hsa REAL,
-  devise TEXT NOT NULL DEFAULT 'AUD',
+  devise TEXT NOT NULL,                   -- devise des montants du poste ; convertie en monnaie de base via monnaie_taux
   salaire_base REAL NOT NULL DEFAULT 0,
   primes REAL,
   charges_pct REAL,
@@ -29,9 +29,7 @@ CREATE TABLE rh_politique (
   etablissement_id INTEGER PRIMARY KEY REFERENCES etablissement(id),
   revalorisation REAL NOT NULL DEFAULT 3,
   gvt REAL NOT NULL DEFAULT 1,
-  taux_hsa REAL NOT NULL DEFAULT 3000,
-  change TEXT NOT NULL DEFAULT '{"AUD":1,"MYR":3.0,"EUR":0.6}',   -- unités de devise pour 1 AUD
-  derive_change TEXT,
+  taux_hsa REAL NOT NULL DEFAULT 0,       -- monnaie de base, par an et par heure hebdomadaire d'HSA (0 = non renseigné)
   min_groupe INTEGER NOT NULL DEFAULT 3
 );
 
@@ -43,6 +41,6 @@ CREATE TABLE forfait (
   type TEXT NOT NULL CHECK (type IN ('imp','decharge','prime','autre')),
   centre TEXT,
   unites REAL NOT NULL,
-  montant_unitaire REAL NOT NULL,         -- AUD par unité et par an
+  montant_unitaire REAL NOT NULL,         -- monnaie de base, par unité et par an
   indexe INTEGER NOT NULL DEFAULT 1
 );

@@ -1,18 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { controlerPostes, coutPoste, enPlaceDepuisPostes, POLITIQUE_DEFAUT, projeterMasseSalariale, type PosteRH } from "../src/lib/rh.ts";
+import { controlerPostes, coutPoste, enPlaceDepuisPostes, POLITIQUE_DEFAUT, projeterMasseSalariale, type PolitiqueSalariale, type PosteRH } from "../src/lib/rh.ts";
 
-const pol = POLITIQUE_DEFAUT;
+const pol: PolitiqueSalariale = { ...POLITIQUE_DEFAUT, tauxHSA: 3000, monnaies: { base: "EUR", taux: { EUR: 1, MYR: 3, USD: 1.1 } } };
 const base = (ref: string, centre: string, x: Partial<PosteRH> = {}): PosteRH => ({
-  ref, service: "secondaire", centre, categorie: "enseignant", statut: "contractuel", quotite: 1, ors: 18, devise: "AUD", salaireBase: 100000, chargesPct: 10, ...x,
+  ref, service: "secondaire", centre, categorie: "enseignant", statut: "contractuel", quotite: 1, ors: 18, devise: "EUR", salaireBase: 100000, chargesPct: 10, ...x,
 });
 const near = (a: number, b: number, e = 1e-9) => assert.ok(Math.abs(a - b) < e, `${a} ≠ ${b}`);
 
 test("coût d'un poste : charges, quotité, HSA, devise, revalorisation et GVT", () => {
   near(coutPoste(base("A", "MAT"), 0, pol), 110);                                   // 100 k × 1,10
   near(coutPoste(base("A", "MAT", { quotite: 0.5 }), 0, pol), 55);
-  near(coutPoste(base("A", "MAT", { hsa: 2 }), 0, pol), 110 + 6);                   // 2 h × 3 000 AUD
-  near(coutPoste(base("A", "MAT", { devise: "MYR", salaireBase: 300000 }), 0, pol), 110);   // 3 MYR pour 1 AUD
+  near(coutPoste(base("A", "MAT", { hsa: 2 }), 0, pol), 110 + 6);                   // 2 h × 3 000 (monnaie de base)
+  near(coutPoste(base("A", "MAT", { devise: "MYR", salaireBase: 300000 }), 0, pol), 110);   // 3 MYR pour 1 unité de base
   near(coutPoste(base("A", "MAT"), 1, pol), 110 * 1.03 * 1.01);                     // revalorisation + GVT
 });
 
@@ -82,9 +82,11 @@ test("contrôles du fichier RH", () => {
   const e = controlerPostes([
     base("A", "MAT"), base("A", "MAT"), base("B", "", { quotite: 0 }), base("C", "ANG", { ors: undefined }),
     base("D", "ESP", { statut: "resident", contributionResident: undefined }), base("E", "LET", { salaireBase: 0 }),
-  ]);
+  ], pol);
   for (const motif of [/double/, /centre/, /quotité/, /ORS/, /contribution/, /salaire/]) assert.ok(e.some((x) => motif.test(x)), String(motif));
-  assert.deepEqual(controlerPostes([base("A", "MAT")]), []);
+  assert.deepEqual(controlerPostes([base("A", "MAT")], pol), []);
+  assert.ok(controlerPostes([base("A", "MAT", { devise: "XYZ" })], pol).some((x) => /Taux de change manquant/.test(x)));
+  assert.ok(controlerPostes([base("A", "MAT", { hsa: 1 })], { ...pol, tauxHSA: 0 }).some((x) => /taux d'HSA/.test(x)));
 });
 
 test("postes en place pour B2 : agrégat par discipline, PE à part", () => {
@@ -98,4 +100,13 @@ test("postes en place pour B2 : agrégat par discipline, PE à part", () => {
   assert.equal(r.postesPE, 1);
   assert.equal(r.hsa, 1);
   assert.equal(r.parDiscipline.PE, undefined);
+});
+
+test("changer de monnaie de base : même masse salariale une fois reconvertie", async () => {
+  const { rebaser, facteurRebasage } = await import("../src/lib/monnaie.ts");
+  const postes = [base("a", "MAT", { devise: "MYR", salaireBase: 300000 }), base("b", "MAT"), base("c", "MAT", { hsa: 2 })];
+  const avant = projeterMasseSalariale(postes, pol);
+  const pol2: PolitiqueSalariale = { ...pol, monnaies: rebaser(pol.monnaies, "MYR"), tauxHSA: pol.tauxHSA * facteurRebasage(pol.monnaies, "MYR") };
+  const apres = projeterMasseSalariale(postes.map((p) => (p.devise === "EUR" ? { ...p, devise: "MYR", salaireBase: p.salaireBase * 3, primes: (p.primes ?? 0) * 3 } : p)), pol2);
+  for (let t = 0; t < 15; t += 7) near(apres.total[t], avant.total[t] * 3, 1e-6);
 });
