@@ -33,10 +33,18 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 - [ ] P2 scénarios et versions (comparaison, statuts, motifs), comparaison réalisé / budget
 - [ ] Dashboard KPI et alertes (Lot 4), API et écrans
 
+## Calibrage LFKL (2 octobre 2026)
+- [x] Règlements financiers 2025-26 et 2026-27, classeur Budget 2026 exploités (`docs/lfkl-calibrage.md`)
+- [x] Historique des effectifs par niveau sur 12 ans : **rétention calculable sur 3 ou 5 ans** (l'export EDUKA par rentrée n'est plus bloquant)
+- [x] Recettes de scolarité 2026 retrouvées à 0,11 % du budget ; PFC, paie locale, pension civile, partenaire du campus, acompte de juin modélisés
+- [x] Anomalie signalée : PFC du classeur surévaluée d'environ 317 000 RM
+- [ ] Effectifs au 30 septembre, postes (versions pseudonymisées), contrats, inventaire des espaces
+
 ## Décisions (1er octobre 2026)
 - **Établissement pilote : LFKL.**
 - **Horizon de prévision : 15 ans** (le cahier des charges §6 disait 5 ans ; à reporter dans le moteur et le registre des drivers).
 - **Plan de trésorerie : mensuel** (12 à 18 mois, puis annuel).
+- **Monnaie de pilotage : ringgit (MYR)** ; rentrée en septembre ; constat AEFE au 30 septembre ; pas d'emprunt.
 
 ## Données de départ (LFKL)
 Extractions EDUKA « Listes des élèves par tarif » 2023-24, 2024-25 et 2025-26 (fichiers bruts dans `data/raw/`, ignorés par git : ID élèves pseudonymisés).

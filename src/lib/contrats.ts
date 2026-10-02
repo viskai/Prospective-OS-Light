@@ -25,6 +25,7 @@ export interface ChargesVariables {
   parM2?: number;                                   // énergie et entretien, par m² et par an
   enveloppesPeda?: Partial<Record<Segment, { montant: number; mode: "forfait" | "par_eleve" }>>;  // remplacent les demandes de moyens
   indexation: number;                               // % par an
+  refacturation?: { categories: string[]; part: number };   // part (%) des charges communes prise en charge par un établissement partenaire du campus
 }
 
 export interface ContexteCharges {
@@ -73,6 +74,12 @@ export function projeterCharges(contrats: Contrat[], v: ChargesVariables, ctx: C
     if (v.parM2) ajouter("surfaces", t, ((ctx.surfaces[t] ?? 0) * v.parM2 * f) / 1000);
     for (const [seg, e] of Object.entries(v.enveloppesPeda ?? {}) as [Segment, { montant: number; mode: "forfait" | "par_eleve" }][])
       ajouter("fonctionnement_pedagogique", t, ((e.mode === "par_eleve" ? (eff[seg] ?? 0) * e.montant : e.montant) * f) / 1000);
+  }
+  if (v.refacturation) {
+    for (let t = 0; t < horizon; t++) {
+      const communes = v.refacturation.categories.reduce((s, c) => s + (parCategorie[c]?.[t] ?? 0), 0);
+      ajouter("refacturation_partenaire", t, (-communes * v.refacturation.part) / 100);
+    }
   }
   const total = Array.from({ length: horizon }, (_, t) => Object.values(parCategorie).reduce((s, a) => s + a[t], 0));
   return { annees, parCategorie, total, alertes: [] };

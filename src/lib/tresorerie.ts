@@ -78,12 +78,16 @@ export interface ParamsPlanMensuel {
   calendrierFacturation: number[];             // 12 valeurs en %, par mois depuis la rentrée, somme 100
   calendrierPaie?: number[]; calendrierFournisseurs?: number[]; calendrierCapex?: number[]; calendrierDette?: number[]; calendrierRessources?: number[];
   seuilMois: number;                           // couverture minimale en mois de charges d'exploitation
+  /** Acompte de réinscription : encaissé un mois donné (juin), déduit de la facture de la 1re période de l'année suivante. */
+  acompte?: { mois: number; montantParEleve: number; eleves: number[]; initial?: number /* élèves ayant payé l'acompte avant le début du plan */ };
 }
 
 export interface MoisTreso {
   mois: string; t: number;
   encaissements: number; paie: number; fournisseurs: number; capex: number; dette: number; ressources: number;
   flux: number; solde: number; couvertureMois: number | null;
+  acompte: number;                             // acompte encaissé ce mois (inclus dans les encaissements)
+  deductionAcompte: number;                    // acompte déduit de la facture de ce mois (déjà retranché des encaissements)
 }
 
 export interface PlanMensuel {
@@ -122,14 +126,18 @@ export function planMensuel(p: ParamsPlanMensuel): PlanMensuel {
     const t = an - p.debutAnnee - (m < rentree ? 1 : 0), pos = (m - rentree + 12) % 12;
     if (t < 0 || t >= p.annuel.encaissements.length) throw new Error(`Mois ${an}-${String(m).padStart(2, "0")} hors de la projection`);
     const A = p.annuel;
-    const enc = A.encaissements[t] * cal(p.calendrierFacturation, pos), paie = A.paie[t] * cal(p.calendrierPaie, pos);
+    const ac = p.acompte;
+    const acompteRecu = ac && m === ac.mois ? ((ac.eleves[t] ?? 0) * ac.montantParEleve) / 1000 : 0;
+    // la déduction porte sur la 1re facture de l'année scolaire : acompte payé en juin de l'année scolaire précédente
+    const deduction = ac && pos === 0 ? (((t > 0 ? ac.eleves[t - 1] : ac.initial) ?? 0) * ac.montantParEleve) / 1000 : 0;
+    const enc = A.encaissements[t] * cal(p.calendrierFacturation, pos) - deduction + acompteRecu, paie = A.paie[t] * cal(p.calendrierPaie, pos);
     const four = A.fournisseurs[t] * cal(p.calendrierFournisseurs, pos), capex = A.capex[t] * cal(p.calendrierCapex, pos);
     const dette = A.serviceDette[t] * cal(p.calendrierDette, pos), res = (A.ressources?.[t] ?? 0) * cal(p.calendrierRessources, pos);
     const flux = enc + res - paie - four - capex - dette;
     solde += flux;
     const chargesMensuelles = (A.paie[t] + A.fournisseurs[t]) / 12;
     mois.push({ mois: `${an}-${String(m).padStart(2, "0")}`, t, encaissements: enc, paie, fournisseurs: four, capex, dette, ressources: res, flux, solde,
-      couvertureMois: chargesMensuelles > 0 ? solde / chargesMensuelles : null });
+      couvertureMois: chargesMensuelles > 0 ? solde / chargesMensuelles : null, acompte: acompteRecu, deductionAcompte: deduction });
   }
   const bas = mois.reduce((b, x) => (x.solde < b.solde ? x : b), mois[0]);
   const couv = mois.map((x) => x.couvertureMois).filter((x): x is number => x != null);

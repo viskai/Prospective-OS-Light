@@ -110,3 +110,35 @@ test("changer de monnaie de base : même masse salariale une fois reconvertie", 
   const apres = projeterMasseSalariale(postes.map((p) => (p.devise === "EUR" ? { ...p, devise: "MYR", salaireBase: p.salaireBase * 3, primes: (p.primes ?? 0) * 3 } : p)), pol2);
   for (let t = 0; t < 15; t += 7) near(apres.total[t], avant.total[t] * 3, 1e-6);
 });
+
+// Cas chiffrés du classeur budget LFKL (montants seuls, sans donnée nominative), en ringgit.
+const CS = { epfPct: 13, socsoPct: 1.75, socsoPlafondAnnuel: 1249.8, eisPct: 0.2, hrdfPct: 1, bonusMois: 1.3 };
+
+test("régime local malaisien : bonus, EPF, SOCSO plafonnée, EIS, HRDF (cas du classeur)", async () => {
+  const { coutEmployeurLocal } = await import("../src/lib/rh.ts");
+  // technicien malaisien, bonus : salaire 50 285,88 → coût employeur 64 623,01
+  const a = coutEmployeurLocal(50285.88, 0, { malaisien: true, bonusEligible: true }, CS);
+  near(a.brut, 55733.517, 1e-3); near(a.total, 64623.0129615, 1e-3);
+  // enseignant malaisien sans bonus : salaire 153 222 + indemnités 11 889 → 189 806,56 (SOCSO plafonnée à 1 249,8)
+  const b = coutEmployeurLocal(153222, 11889, { malaisien: true }, CS);
+  near(b.total, 189806.562, 1e-3); near(b.charges, 21464.43 + 1249.8 + 330.222 + 1651.11, 1e-2);
+  // non malaisien : ni EIS ni HRDF
+  const c = coutEmployeurLocal(278189.28, 40329, { malaisien: false }, CS);
+  near(c.total, 318518.28 + 41407.3764 + 1249.8, 1e-2);
+});
+
+test("poste à régime local dans la masse salariale, avec revalorisation et GVT", () => {
+  const p0: PolitiqueSalariale = { ...POLITIQUE_DEFAUT, monnaies: { base: "MYR", taux: { MYR: 1 } }, chargesSociales: CS };
+  const poste = base("L", "ANG", { devise: "MYR", salaireBase: 153222, chargesPct: undefined, regimeLocal: { malaisien: true, indemnitesAnnuelles: 11889 } });
+  near(coutPoste(poste, 0, p0), 189.806562, 1e-6);
+  const f = 1.03 * 1.01;
+  assert.ok(Math.abs(coutPoste(poste, 1, p0) - 189.806562 * f) < 1.5);          // plafond SOCSO non indexé : écart de l'ordre du millier
+  assert.throws(() => coutPoste(poste, 0, POLITIQUE_DEFAUT), /charges sociales/);
+});
+
+test("pension civile des résidents : montée en charge sur les années", () => {
+  const r = base("R", "MAT", { statut: "resident", salaireBase: 0, contributionResident: 300000, chargesPct: 0, pensionCivile: 100000 });
+  const p1: PolitiqueSalariale = { ...pol, revalorisation: 0, gvt: 0, pensionCivileMontee: [0.4, 1] };
+  near(coutPoste(r, 0, p1), 340); near(coutPoste(r, 1, p1), 400); near(coutPoste(r, 5, p1), 400);       // au-delà de la série : pleine charge
+  near(coutPoste(r, 0, { ...p1, pensionCivileMontee: undefined }), 400);
+});

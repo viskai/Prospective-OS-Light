@@ -67,3 +67,16 @@ test("plan mensuel : calendriers contrôlés, bornes de durée", () => {
   const flat = planMensuel(plan({ calendrierFacturation: CALENDRIER_UNIFORME, soldeOuverture: 400 }));
   assert.equal(flat.alertes.length, 0);
 });
+
+test("acompte de réinscription : encaissé en juin, déduit de la facture de septembre suivante", () => {
+  const sans = planMensuel(plan({ moisDepart: "2026-09", nbMois: 15 }));
+  const avec = planMensuel(plan({ moisDepart: "2026-09", nbMois: 15, acompte: { mois: 6, montantParEleve: 1000, eleves: [800, 800, 800], initial: 780 } }));
+  near(avec.mois[0].deductionAcompte, 780); near(avec.mois[0].encaissements, sans.mois[0].encaissements - 780);   // septembre 2026
+  const juin = avec.mois.find((m) => m.mois === "2027-06")!;
+  near(juin.acompte, 800); near(juin.encaissements, sans.mois.find((m) => m.mois === "2027-06")!.encaissements + 800);
+  const sept27 = avec.mois.find((m) => m.mois === "2027-09")!;
+  near(sept27.deductionAcompte, 800);
+  // l'acompte avance une partie de l'encaissement : le solde de juin à août est meilleur, celui de septembre moins bon
+  const aout = (p: typeof avec) => p.mois.find((m) => m.mois === "2027-08")!.solde;
+  near(aout(avec) - aout(sans), 800 - 780);
+});

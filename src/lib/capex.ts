@@ -15,6 +15,8 @@ export interface ProjetCapex {
   dureeAmort: number;
   partEmprunt: number;                 // % du coût financé par emprunt
   partFonds: number;                   // % financé par fonds affectés (P4)
+  montantForfaitaire?: number;         // investissement ponctuel (monnaie de base) : remplace m² × coût au m²
+  quotePart?: number;                  // % du coût supporté par l'établissement (investissements partagés d'un campus) ; défaut 100
 }
 
 export interface HypothesesCapex {
@@ -35,7 +37,7 @@ export interface ResultatCapex {
   sallesAjoutees: Record<CycleEspace, number>[];
 }
 
-export const coutProjet = (p: ProjetCapex) => (p.m2 * p.coutM2) / 1000;
+export const coutProjet = (p: ProjetCapex) => (((p.montantForfaitaire ?? p.m2 * p.coutM2) / 1000) * (p.quotePart ?? 100)) / 100;
 
 /** Années de décaissement : dureeTravaux années précédant la mise en service (année 0 incluse, jamais avant). */
 export function anneesDecaissement(p: ProjetCapex): number[] {
@@ -94,7 +96,8 @@ export function controlerProjets(projets: ProjetCapex[]): string[] {
   const e: string[] = [];
   for (const p of projets) {
     if (p.partEmprunt + p.partFonds > 100 + 1e-9) e.push(`${p.nom} : emprunt + fonds affectés > 100 %`);
-    if (!(p.m2 > 0) || !(p.coutM2 > 0)) e.push(`${p.nom} : surface ou coût au m² manquant`);
+    if (p.montantForfaitaire == null && (!(p.m2 > 0) || !(p.coutM2 > 0))) e.push(`${p.nom} : surface ou coût au m² manquant`);
+    if (p.quotePart != null && !(p.quotePart > 0 && p.quotePart <= 100)) e.push(`${p.nom} : quote-part hors de 0 à 100 %`);
     if (!(p.dureeAmort >= 1)) e.push(`${p.nom} : durée d'amortissement manquante`);
   }
   return e;

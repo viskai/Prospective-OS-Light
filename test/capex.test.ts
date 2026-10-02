@@ -48,3 +48,12 @@ test("contrôles des projets", () => {
   assert.ok(controlerProjets([{ ...p, partEmprunt: 80, partFonds: 30 }]).some((x) => />/.test(x)));
   assert.ok(controlerProjets([{ ...p, m2: 0 }]).length > 0);
 });
+
+test("investissement ponctuel et quote-part dans un campus partagé", () => {
+  const ponctuel: ProjetCapex = { nom: "Pompe", salles: 0, m2: 0, coutM2: 0, montantForfaitaire: 143880, quotePart: 77.5, anneeService: 1, dureeTravaux: 1, dureeAmort: 10, partEmprunt: 0, partFonds: 0 };
+  near(coutProjet(ponctuel), 143.88 * 0.775);
+  assert.deepEqual(controlerProjets([ponctuel]), []);
+  assert.ok(controlerProjets([{ ...ponctuel, quotePart: 120 }]).some((x) => /quote-part/.test(x)));
+  const r = calculerCapex([ponctuel], h);
+  near(r.decaissements[0], 143.88 * 0.775); near(r.dotations[1], 143.88 * 0.775 / 10);
+});

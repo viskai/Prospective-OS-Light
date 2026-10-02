@@ -1,0 +1,178 @@
+{
+  "source": "Budget 2026, feuille PROJEC_REVENUS (effectifs au 15/12/2025, projection montée de cohorte 2026-27, tarifs arrondis à la centaine)",
+  "resultats_budget_2026": {
+    "frais_scolarite_particulier_brut": 23469472,
+    "frais_scolarite_entreprise_brut": 10011102,
+    "ponderation_annee_civile": {
+      "periodes_T2_T3_annee_precedente": 0.6,
+      "periode_T1_annee_courante": 0.4
+    }
+  },
+  "niveaux": [
+    {
+      "niveau": "PS",
+      "effectif_2025_26": 13,
+      "famille": 12,
+      "corporate": 1,
+      "tarif_famille_2025_26": 29800,
+      "tarif_corporate_2025_26": 41300,
+      "effectif_2026_27": 16.33,
+      "tarif_famille_2026_27": 30200,
+      "tarif_corporate_2026_27": 41900
+    },
+    {
+      "niveau": "MS",
+      "effectif_2025_26": 37,
+      "famille": 32,
+      "corporate": 5,
+      "tarif_famille_2025_26": 29800,
+      "tarif_corporate_2025_26": 41300,
+      "effectif_2026_27": 22.89,
+      "tarif_famille_2026_27": 30200,
+      "tarif_corporate_2026_27": 41900
+    },
+    {
+      "niveau": "GS",
+      "effectif_2025_26": 50,
+      "famille": 41,
+      "corporate": 9,
+      "tarif_famille_2025_26": 29800,
+      "tarif_corporate_2025_26": 41300,
+      "effectif_2026_27": 65.67,
+      "tarif_famille_2026_27": 30200,
+      "tarif_corporate_2026_27": 41900
+    },
+    {
+      "niveau": "CP",
+      "effectif_2025_26": 55,
+      "famille": 37,
+      "corporate": 18,
+      "tarif_famille_2025_26": 35900,
+      "tarif_corporate_2025_26": 48500,
+      "effectif_2026_27": 63.61,
+      "tarif_famille_2026_27": 36400,
+      "tarif_corporate_2026_27": 49200
+    },
+    {
+      "niveau": "CE1",
+      "effectif_2025_26": 62,
+      "famille": 45,
+      "corporate": 17,
+      "tarif_famille_2025_26": 35900,
+      "tarif_corporate_2025_26": 48500,
+      "effectif_2026_27": 60.45,
+      "tarif_famille_2026_27": 36400,
+      "tarif_corporate_2026_27": 49200
+    },
+    {
+      "niveau": "CE2",
+      "effectif_2025_26": 68,
+      "famille": 51,
+      "corporate": 17,
+      "tarif_famille_2025_26": 35900,
+      "tarif_corporate_2025_26": 48500,
+      "effectif_2026_27": 65.5,
+      "tarif_famille_2026_27": 36400,
+      "tarif_corporate_2026_27": 49200
+    },
+    {
+      "niveau": "CM1",
+      "effectif_2025_26": 77,
+      "famille": 61,
+      "corporate": 16,
+      "tarif_famille_2025_26": 35900,
+      "tarif_corporate_2025_26": 48500,
+      "effectif_2026_27": 70.1,
+      "tarif_famille_2026_27": 36400,
+      "tarif_corporate_2026_27": 49200
+    },
+    {
+      "niveau": "CM2",
+      "effectif_2025_26": 62,
+      "famille": 46,
+      "corporate": 16,
+      "tarif_famille_2025_26": 35900,
+      "tarif_corporate_2025_26": 48500,
+      "effectif_2026_27": 78.83,
+      "tarif_famille_2026_27": 36400,
+      "tarif_corporate_2026_27": 49200
+    },
+    {
+      "niveau": "6e",
+      "effectif_2025_26": 80,
+      "famille": 60,
+      "corporate": 20,
+      "tarif_famille_2025_26": 43400,
+      "tarif_corporate_2025_26": 58000,
+      "effectif_2026_27": 64.81,
+      "tarif_famille_2026_27": 44100,
+      "tarif_corporate_2026_27": 58900
+    },
+    {
+      "niveau": "5e",
+      "effectif_2025_26": 52,
+      "famille": 34,
+      "corporate": 18,
+      "tarif_famille_2025_26": 43400,
+      "tarif_corporate_2025_26": 58000,
+      "effectif_2026_27": 76.95,
+      "tarif_famille_2026_27": 44100,
+      "tarif_corporate_2026_27": 58900
+    },
+    {
+      "niveau": "4e",
+      "effectif_2025_26": 46,
+      "famille": 35,
+      "corporate": 11,
+      "tarif_famille_2025_26": 43400,
+      "tarif_corporate_2025_26": 58000,
+      "effectif_2026_27": 49.26,
+      "tarif_famille_2026_27": 44100,
+      "tarif_corporate_2026_27": 58900
+    },
+    {
+      "niveau": "3e",
+      "effectif_2025_26": 55,
+      "famille": 39,
+      "corporate": 16,
+      "tarif_famille_2025_26": 43400,
+      "tarif_corporate_2025_26": 58000,
+      "effectif_2026_27": 39.72,
+      "tarif_famille_2026_27": 44100,
+      "tarif_corporate_2026_27": 58900
+    },
+    {
+      "niveau": "2nde",
+      "effectif_2025_26": 37,
+      "famille": 33,
+      "corporate": 4,
+      "tarif_famille_2025_26": 47900,
+      "tarif_corporate_2025_26": 63000,
+      "effectif_2026_27": 55.28,
+      "tarif_famille_2026_27": 48600,
+      "tarif_corporate_2026_27": 63900
+    },
+    {
+      "niveau": "1ere",
+      "effectif_2025_26": 37,
+      "famille": 28,
+      "corporate": 9,
+      "tarif_famille_2025_26": 47900,
+      "tarif_corporate_2025_26": 63000,
+      "effectif_2026_27": 35.32,
+      "tarif_famille_2026_27": 48600,
+      "tarif_corporate_2026_27": 63900
+    },
+    {
+      "niveau": "Tle",
+      "effectif_2025_26": 44,
+      "famille": 33,
+      "corporate": 11,
+      "tarif_famille_2025_26": 47900,
+      "tarif_corporate_2025_26": 63000,
+      "effectif_2026_27": 34.92,
+      "tarif_famille_2026_27": 48600,
+      "tarif_corporate_2026_27": 63900
+    }
+  ]
+}

@@ -56,3 +56,11 @@ test("contrôles du registre", () => {
   for (const r of [/double/, /antérieure/, /Taux de change/, /centre/]) assert.ok(e.some((x) => r.test(x)), String(r));
   assert.deepEqual(controlerContrats([c("A")], m), []);
 });
+
+test("charges communes du campus : part prise en charge par l'établissement partenaire", () => {
+  const r = projeterCharges([c("M", { montantAnnuel: 1000000, categorie: "maintenance" }), c("S", { montantAnnuel: 400000, categorie: "securite" })],
+    { indexation: 0, parM2: 100, refacturation: { categories: ["maintenance", "securite", "surfaces"], part: 22.5 } }, ctx);
+  const communes = 1000 + 400 + 10000 * 100 / 1000;
+  near(r.parCategorie.refacturation_partenaire[0], -communes * 0.225);
+  near(r.total[0], communes * 0.775);
+});

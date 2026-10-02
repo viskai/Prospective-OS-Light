@@ -3,30 +3,30 @@
 Règles : fichiers `.xlsx` ou `.csv` ; **aucun nom, prénom, date de naissance ni adresse** (ID EDUKA pseudonymisé pour les élèves, référence opaque pour les postes) ; une date de constat sur chaque extraction. Les fichiers bruts restent hors de git (`data/raw/`).
 
 ## Priorité 1 — pour un premier calcul calibré
-- [ ] **Cadrage** : monnaie de pilotage de LFKL ; devises utilisées et taux de change ; mois de rentrée et date de constat AEFE (30 septembre ?).
-- [ ] **EDUKA — effectifs par rentrée** : un export **par année, daté de la rentrée**, avec le niveau de l'année (pas le niveau courant), idéalement 5 ans ; niveau × section × classe ; élèves entrants et sortants.
+- [x] **Cadrage** : monnaie MYR ; autres devises euro et Asie-Pacifique ; rentrée en septembre ; constat AEFE au 30 septembre. *Reste : taux de change à confirmer (≈ 4,85 RM pour 1 euro dans le classeur).*
+- [~] **EDUKA — effectifs par rentrée** : l'historique par niveau 2014-15 à 2025-26 est dans le classeur Budget (dates de constat mêlées : 1er et 15 décembre). *Reste : les effectifs **au 30 septembre**, et par section.*
 - [ ] **EDUKA — structure actuelle** : nombre de divisions et effectif par classe, par niveau (2025-26 et 2026-27).
 - [ ] **EDUKA — facturé** par rubrique (scolarité, inscription, annexes, remises, fratries) et par type tarifaire, 2025-26 et 2026-27.
-- [ ] **Grille tarifaire** 2026-27 par niveau ou cycle, frais de première inscription, services annexes, ratios de remises, politique d'évolution tarifaire.
+- [x] **Grille tarifaire** 2025-26 et 2026-27, frais de première inscription, remises (règlement financier et budget). *Reste : politique d'évolution tarifaire au-delà de 2027, effectifs en section internationale.*
 - [ ] **Postes par discipline** (annoncé) : référence opaque, service, discipline ou département, catégorie, statut, contrat, quotité, ORS, HSA, devise, salaire de base, primes, charges, avantages, contribution du résident, dates d'arrivée et de départ prévues.
 - [ ] **Grille horaire LFKL** : heures par discipline et par niveau, malais (volumes), LV2 offertes, spécialités, options, dispositifs BFI, plafonds de classe et de groupe, ORS par statut.
 - [ ] **Choix des élèves** : nombre d'élèves par LV2, spécialité et option, par niveau (agrégé).
 
 ## Priorité 2 — pour les états financiers
-- [ ] **AEFE** : notification de PFC (taux, assiette, abattement), subventions, bourses, coût d'un résident pour l'établissement.
-- [ ] **Politique salariale** : revalorisation, GVT, taux d'une heure d'HSA, HSA maximales par poste, nombre et montant des **IMP** et des **décharges**, coût moyen d'un temps plein local.
-- [ ] **Comptabilité** : balance générale et grand livre analytique du dernier exercice clos ; plan comptable et rattachement aux natures et centres de coût ; budget en cours ; réalisé.
+- [x] **PFC** : taux 6 %, abattement 6 %, assiette au tarif particulier. *Reste : subventions, bourses, coût d'un résident par poste.*
+- [~] **Politique salariale** : GVT 1,66 %, IMP à 6 000 RM, charges sociales locales connus. *Reste : taux d'une heure d'HSA, HSA maximales, décharges, coût moyen d'un temps plein local, hypothèse de revalorisation générale.*
+- [~] **Comptabilité** : synthèse budget 2026 reçue. *Reste :* balance générale et grand livre analytique du dernier exercice clos ; plan comptable et rattachement aux natures et centres de coût ; budget en cours ; réalisé.
 - [ ] **Immobilisations** : valeur nette, dotations, durées d'amortissement.
 - [ ] **Créances familles et dettes fournisseurs** : encours et délais moyens de règlement.
 - [ ] **Banques** : soldes par compte et devise à une date, relevés sur 12 à 18 mois (pour la saisonnalité), placements.
-- [ ] **Emprunts et lignes de crédit** : capital restant dû, taux, échéancier, durée résiduelle.
+- [x] **Emprunts** : aucun à ce jour. *Reste : lignes de crédit éventuelles, placements.*
 - [ ] **Calendriers** : dates et parts de facturation aux familles, calendrier de paie, seuil de trésorerie minimale souhaité.
 
 ## Priorité 3 — fonctionnement et investissement
 - [ ] **Contrats** : fournisseur, objet, montant et devise, dates de début et de fin, préavis, indexation, centre de coût, reconduction.
-- [ ] **Charges variables** : énergie et entretien par m², coût par élève, enveloppes de fonctionnement pédagogique par cycle, indexation.
+- [~] **Charges variables** (maintenance et énergie : budget 2026 reçu ; partenaire du campus 22,5 %) : : énergie et entretien par m², coût par élève, enveloppes de fonctionnement pédagogique par cycle, indexation.
 - [ ] **Inventaire des espaces** : salles de classe par cycle, salles spécialisées (laboratoires, arts), gymnase, CDI, administration, avec surfaces ; taux d'occupation observé.
-- [ ] **Projets d'investissement** envisagés : surface, coût au m², calendrier, durée des travaux, durée d'amortissement, financement (emprunt, fonds, autofinancement).
+- [~] **Projets d'investissement** (liste priorisée 2026-27 reçue ; extension du lycée en phase d'étude) : : surface, coût au m², calendrier, durée des travaux, durée d'amortissement, financement (emprunt, fonds, autofinancement).
 - [ ] **Fundraising** : campagnes, promesses, probabilité, calendrier d'encaissement, affectation ; fonds affectés existants.
 
 ## IB (n'existe pas encore)

@@ -26,8 +26,28 @@ export interface PosteRH {
   chargesPct?: number;                // charges employeur, % du salaire
   avantages?: number;                 // annuel, en `devise`
   contributionResident?: number;      // résident AEFE : coût annuel pour l'établissement (remplace le salaire), en `devise`
+  regimeLocal?: RegimeLocal;          // contrat local malaisien : charges sociales calculées par règles (remplace chargesPct)
+  pensionCivile?: number;             // résident : contribution annuelle à la pension civile, à pleine charge, en `devise`
   anneeDebut?: number;                // index d'année de projection (0 = année de départ)
   anneeFin?: number;                  // dernière année incluse
+}
+
+/** Contrat local malaisien : les charges dépendent de la nationalité et du droit au bonus. */
+export interface RegimeLocal {
+  malaisien: boolean;                 // EIS et HRDF ne s'appliquent qu'aux malaisiens (et résidents permanents pour l'EIS)
+  bonusEligible?: boolean;
+  indemnitesAnnuelles?: number;       // allocations et indemnités, annuel en `devise`
+  epfPct?: number;                    // surcharge du taux EPF (défaut : celui de la politique)
+}
+
+/** Règles de charges sociales locales (à tenir à jour avec la réglementation). */
+export interface ChargesSociales {
+  epfPct: number;                     // cotisation employeur, % du brut
+  socsoPct: number;                   // % du brut, plafonné
+  socsoPlafondAnnuel: number;         // montant annuel maximal de la cotisation, en monnaie de base
+  eisPct: number;
+  hrdfPct: number;
+  bonusMois: number;                  // provision de bonus, en mois de salaire
 }
 
 export interface PolitiqueSalariale {
@@ -36,6 +56,8 @@ export interface PolitiqueSalariale {
   tauxHSA: number;                    // monnaie de base, par an et par heure hebdomadaire d'HSA (0 = non renseigné)
   monnaies: Monnaies;                 // monnaie de base et taux de change
   minGroupe: number;                  // seuil de confidentialité (3)
+  chargesSociales?: ChargesSociales;  // requis pour les postes à régime local
+  pensionCivileMontee?: number[];     // part de la pension civile due, par année (ex. [0.37, 1, 1…]) ; absent = pleine charge
 }
 
 /** Aucun montant par défaut : taux d'HSA et taux de change sont des paramètres à renseigner. */
@@ -61,14 +83,37 @@ export interface PosteCree {          // créations issues de B2 (temps pleins l
 
 const facteur = (pct: number, t: number) => Math.pow(1 + pct / 100, t);
 
+/**
+ * Coût employeur local : brut = salaire + indemnités + provision de bonus ; + EPF + SOCSO (plafonnée) + EIS + HRDF.
+ * Montants dans une même unité (celle du salaire).
+ */
+export function coutEmployeurLocal(salaire: number, indemnites: number, r: RegimeLocal, c: ChargesSociales): { brut: number; charges: number; total: number } {
+  const bonus = r.bonusEligible ? (salaire / 12) * c.bonusMois : 0;
+  const brut = salaire + indemnites + bonus;
+  const epf = (brut * (r.epfPct ?? c.epfPct)) / 100;
+  const socso = Math.min((brut * c.socsoPct) / 100, c.socsoPlafondAnnuel);
+  const eis = r.malaisien ? (brut * c.eisPct) / 100 : 0;
+  const hrdf = r.malaisien ? (brut * c.hrdfPct) / 100 : 0;
+  const charges = epf + socso + eis + hrdf;
+  return { brut, charges, total: brut + charges };
+}
+
 /** Coût annuel d'un poste pour l'établissement, en milliers de monnaie de base, à l'année t de projection ; 0 hors de sa période. */
 export function coutPoste(p: PosteRH, t: number, pol: PolitiqueSalariale): number {
   if (t < (p.anneeDebut ?? 0) || (p.anneeFin != null && t > p.anneeFin)) return 0;
   const charges = 1 + (p.chargesPct ?? 0) / 100;
-  let base: number;
-  if (p.statut === "resident") base = (p.contributionResident ?? 0) * p.quotite;
-  else base = ((p.salaireBase * p.quotite + (p.primes ?? 0)) * charges + (p.avantages ?? 0));
   const revalo = facteur(pol.revalorisation, t) * (p.statut === "resident" ? 1 : facteur(pol.gvt, t));
+  let base: number;
+  if (p.statut === "resident") {
+    const pension = (p.pensionCivile ?? 0) * (pol.pensionCivileMontee?.[t] ?? 1);
+    base = ((p.contributionResident ?? 0) + pension) * p.quotite;
+  } else if (p.regimeLocal) {
+    if (!pol.chargesSociales) throw new Error(`${p.ref} : régime local sans règles de charges sociales dans la politique salariale`);
+    // les plafonds ne sont pas indexés : on calcule sur les montants revalorisés, en monnaie de base
+    const aBase = (v: number) => versBase(pol.monnaies, v * revalo, p.devise, t);
+    const c = coutEmployeurLocal(aBase(p.salaireBase * p.quotite), aBase((p.regimeLocal.indemnitesAnnuelles ?? 0) + (p.primes ?? 0)), p.regimeLocal, pol.chargesSociales);
+    return (c.total + aBase(p.avantages ?? 0) + (p.hsa ?? 0) * pol.tauxHSA * facteur(pol.revalorisation, t)) / 1000;
+  } else base = ((p.salaireBase * p.quotite + (p.primes ?? 0)) * charges + (p.avantages ?? 0));
   const enBase = versBase(pol.monnaies, base * revalo, p.devise, t);
   const hsa = (p.hsa ?? 0) * pol.tauxHSA * facteur(pol.revalorisation, t);     // heures × taux, déjà en monnaie de base
   return (enBase + hsa) / 1000;

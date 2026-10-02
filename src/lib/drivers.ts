@@ -49,10 +49,18 @@ export function registreInitial(): DriverDef[] {
   for (const c of ["Mat", "Elem", "Col", "Lyc"]) out.push(d(`rev.tarif.${c}`, `Droits de scolarité — ${c}`, "{M}/an", "A2", 100));
   out.push(d("rev.hausse", "Hausse annuelle des tarifs", "%", "A2", 0.5));
   out.push(d("rev.remise", "Remises et fratries", "% brut", "A2", 0.5));
+  out.push(d("rev.remise.fratrie", "Remise fratrie (3e enfant et suivants)", "% brut", "A2", 0.05));
+  out.push(d("rev.remise.personnel", "Remise enfants du personnel", "% brut", "A2", 0.05));
+  out.push(d("rev.remise.paiementAnnuel", "Ristourne de paiement annuel", "% brut", "A2", 0.05));
+  out.push(d("rev.partParticulier", "Part des familles au tarif particulier", "%", "A2", 1));
+  out.push(d("rev.tarifEntreprise", "Droits de scolarité au tarif entreprise", "{M}/an", "A2", 100));
+  out.push(d("rev.supplementSI", "Supplément section internationale", "{M}/an", "A2", 100));
+  out.push(d("rev.acompte", "Acompte de réinscription (juin)", "{M}", "A2", 100));
   out.push(d("rev.fraisInscription", "Frais de première inscription", "{M}", "A2", 100));
   out.push(d("rev.autresParEleve", "Services annexes par élève", "{M}/an", "A2", 50));
   out.push(d("aefe.pfc", "Taux de PFC AEFE", "% brut", "A3", 0.5));
   out.push(d("aefe.abattement", "Abattement sur la PFC", "%", "A3"));
+  out.push(d("aefe.tarifAssiette", "Tarif servant à l'assiette de la PFC (particulier)", "{M}/an", "A3", 100));
   out.push(d("aefe.subventions", "Subventions d'exploitation", "k{M}/an", "A3", 10));
 
   for (const c of ["maternelle", "elementaire", "college", "lycee"]) out.push(d(`struct.plafondClasse.${c}`, `Plafond de classe — ${c}`, "élèves", "B1"));
@@ -78,6 +86,12 @@ export function registreInitial(): DriverDef[] {
   out.push(d("forfait.decharge.montant", "Montant forfaitaire d'une décharge", "{M}/an", "B3", 500));
 
   out.push(d("sg.indexation", "Indexation des charges", "%/an", "C1", 0.25));
+  out.push(d("sg.partenaireCampus", "Part des charges communes prise en charge par le partenaire du campus", "%", "C1", 0.5));
+  out.push(d("capex.quotePart", "Quote-part supportée dans les investissements partagés", "%", "D2", 0.5));
+  out.push(d("pay.pensionCivileMontee", "Montée en charge de la pension civile des détachés", "% de la pleine charge", "B3", 5));
+  out.push(d("pay.epf", "EPF, part employeur", "%", "B3", 0.5));
+  out.push(d("pay.socsoPlafond", "Plafond annuel de la SOCSO", "{M}/an", "B3", 10));
+  out.push(d("pay.bonusMois", "Provision de bonus", "mois de salaire", "B3", 0.1));
   out.push(d("sg.parM2", "Énergie et entretien par m²", "{M}/m²/an", "C1", 5));
   for (const c of ["Mat", "Elem", "Col", "Lyc"]) out.push(d(`sg.peda.${c}`, `Enveloppe de fonctionnement pédagogique — ${c}`, "{M}", "C1", 50));
   out.push(d("sg.preavisAlerteJours", "Seuil d'alerte de préavis", "jours", "C1"));

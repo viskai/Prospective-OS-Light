@@ -1,0 +1,39 @@
+{
+  "_note": "Paramètres LFKL issus du règlement financier 2025-26 et 2026-27 et du classeur Budget 2026. Montants en ringgit (RM). Aucune donnée nominative.",
+  "etablissement": { "code": "LFKL", "monnaie_base": "MYR", "mois_rentree": 9, "date_constat_aefe": "30 septembre", "exercice_comptable": "année civile" },
+  "devises": { "autres": ["EUR", "toutes devises Asie-Pacifique"], "taux_indicatif": { "EUR": 4.85, "_source": "classeur Budget (calcul pension civile : 34 750 EUR = 168 607 RM) ; IMP : 1 250 EUR = 6 000 RM. À confirmer et à piloter par driver." } },
+  "emprunts": { "existants": [], "_note": "Pas d'emprunt à ce jour." },
+  "tarifs_ecolage_rm": {
+    "2025-26": { "particulier": { "Mat": 29800, "Elem": 35900, "Col": 43400, "Lyc": 47900 }, "entreprise": { "Mat": 41300, "Elem": 48500, "Col": 58000, "Lyc": 63000 }, "supplement_section_internationale": { "Col": 9500, "Lyc": 9500 } },
+    "2026-27": { "particulier": { "Mat": 30200, "Elem": 36400, "Col": 44100, "Lyc": 48600 }, "entreprise": { "Mat": 41900, "Elem": 49200, "Col": 58900, "Lyc": 63900 }, "supplement_section_internationale": { "Col": 9600, "Lyc": 9600 } }
+  },
+  "frais_rm": { "premiere_inscription_TPS_PS_MS": 8800, "premiere_inscription_autres_niveaux": 13200, "caution_par_enfant": 13000, "acompte_reinscription_par_enfant": 1000, "cotisation_unique_par_parent": 100, "_note_inscription": "Pas de première inscription en cas de réinscription sous 3 ans ; caution remboursable (passif, hors compte de résultat)." },
+  "remises": {
+    "fratrie": { "3e_enfant": 0.10, "4e_enfant": 0.15, "5e_enfant_et_suivants": 0.20 },
+    "paiement_annuel_septembre": 0.03,
+    "observe_budget_2026_rm": { "fratrie_3e_a_5e": 217417, "enfants_du_personnel": 1497836, "paiement_annuel_3pct": 290634 },
+    "base_brute_2026_rm": 33642574
+  },
+  "facturation": {
+    "calendrier_trimestriel": { "septembre": 0.40, "janvier": 0.30, "avril": 0.30 },
+    "paiement_annuel": "intégral en septembre avec ristourne de 3 %",
+    "acompte_juin_deduit_de_la_facture_de_septembre": true,
+    "monnaies_de_paiement": ["MYR", "EUR (au taux de chancellerie)"],
+    "penalite_retard": 0.05,
+    "sst_service_tax": { "taux": 0.08, "seuil_famille_rm_par_an": 60000, "traitement": "collectée pour l'État, hors recettes" }
+  },
+  "pfc": { "assiette": "effectifs constatés × tarif particulier (sous-estimation volontaire de l'assiette)", "abattement": 0.06, "taux": 0.06, "date_constat": "30 septembre", "nature": "charge (compte 521130)", "ponderation_annee_civile": { "annee_precedente": "2/3", "annee_courante": "1/3" } },
+  "salaires_locaux": {
+    "epf_employeur": 0.13,
+    "socso": { "taux": 0.0175, "plafond_annuel_rm": 1249.8 },
+    "eis": { "taux": 0.002, "personnes": "malaisiens et résidents permanents" },
+    "hrdf": { "taux": 0.01, "personnes": "malaisiens" },
+    "provision_bonus_mois": 1.3,
+    "gvt": 0.0166,
+    "augmentation_generale_hypotheses": [0.005, 0.01, 0.015]
+  },
+  "imp": { "montant_annuel_par_imp_rm": 6000, "equivalent_france_eur": 1250, "enveloppe_annuelle_imp_et_equivalents_rm": 340300 },
+  "partenaire_campus": { "part_charges_communes": 0.225, "part_lfkl": 0.775, "_note": "Charges de maintenance, énergie, nettoyage, sécurité du campus partagé ; investissements communs répartis 77,5 % / 22,5 %." },
+  "indexation_charges_budget_2027": 0.04,
+  "ordres_de_grandeur_budget_2026_rm": { "recettes": 36641214, "personnel_pedagogique": 22031331, "personnel_administratif": 2934185, "amortissements": 2067180, "resultat_net": 2254082, "pfc_budgetee": 2065360 }
+}
