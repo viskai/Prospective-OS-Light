@@ -28,7 +28,10 @@ Découpage en 4 lots (cahier des charges §9), chaque lot recetté avant le suiv
 ## Lot 3 (démarré)
 - [x] Monnaie unique de pilotage, modifiable, sans devise en dur (`docs/monnaie.md`) ; HSA en heures, seul leur taux est un montant
 - [x] IB : effectifs à part, retranchés de la 1ère et de la terminale, tarification et coûts différenciés (`docs/ib.md`)
-- [x] C1 contrats et charges, D1 besoins d'espaces, D2 CAPEX pluriannuel (`docs/c1-d1-d2.md`) — reste : D3 financement et trésorerie, P4 fundraising
+- [x] C1 contrats et charges, D1 besoins d'espaces, D2 CAPEX pluriannuel (`docs/c1-d1-d2.md`)
+- [x] D3 financement et trésorerie mensuelle, P4 fundraising, P3 états financiers bouclés, moteur de scénario de bout en bout (`docs/d3-p4-p3.md`)
+- [ ] P2 scénarios et versions (comparaison, statuts, motifs), comparaison réalisé / budget
+- [ ] Dashboard KPI et alertes (Lot 4), API et écrans
 
 ## Décisions (1er octobre 2026)
 - **Établissement pilote : LFKL.**

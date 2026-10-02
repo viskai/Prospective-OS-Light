@@ -91,6 +91,17 @@ export function registreInitial(): DriverDef[] {
   out.push(d("capex.vncExistante", "Immobilisations nettes existantes", "k{M}", "D2", 100));
   out.push(d("capex.dotationExistante", "Dotation annuelle sur l'existant", "k{M}/an", "D2", 50));
 
+  out.push(d("fin.tauxEmprunt", "Taux des nouveaux emprunts", "%/an", "D3", 0.25));
+  out.push(d("fin.dureeEmprunt", "Durée des nouveaux emprunts", "ans", "D3"));
+  out.push(d("fin.tauxPlacement", "Taux de rémunération de la trésorerie", "%/an", "D3", 0.25));
+  out.push(d("fin.tauxDecouvert", "Taux des concours bancaires", "%/an", "D3", 0.25));
+  out.push(d("fin.tresorerieInitiale", "Trésorerie d'ouverture (comptes consolidés)", "k{M}", "D3", 100));
+  out.push(d("fin.seuilMois", "Couverture minimale de trésorerie", "mois de charges", "D3", 0.5));
+  out.push(d("fin.joursCreances", "Délai moyen de règlement des familles", "jours", "P3"));
+  out.push(d("fin.joursDettes", "Délai moyen de règlement des fournisseurs", "jours", "P3"));
+  out.push(d("fonds.objectif", "Objectif de collecte", "k{M}", "P4", 50));
+  out.push(d("fonds.soldeInitial", "Fonds affectés reçus et non employés au départ", "k{M}", "P4", 50));
+
   // taux de change : unités de la devise pour 1 unité de monnaie de pilotage, créés par devise utilisée
   return out;
 }
